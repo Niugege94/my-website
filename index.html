@@ -53,9 +53,10 @@
             outline: none;
             -webkit-user-select: none; /* 禁止选中文字 */
             user-select: none;
+            transition: background-color 0.2s ease; /* 过渡效果，更顺滑 */
         }
 
-        /* 9个宫格的颜色 */
+        /* 9个宫格的基础颜色 */
         .sudoku-container input[data-row="0"][data-col="0"],
         .sudoku-container input[data-row="0"][data-col="1"],
         .sudoku-container input[data-row="0"][data-col="2"],
@@ -183,6 +184,18 @@
             font-weight: bold;
         }
 
+        /* 新增：选中单元格高亮（淡绿色） */
+        .sudoku-container input.active-cell {
+            background-color: #b7f0b7 !important; /* 淡绿色，!important覆盖宫格基础颜色 */
+            border: 2px solid #66cc66 !important; /* 增加边框，更醒目 */
+        }
+
+        /* 新增：选中单元格的同行同列（深灰色） */
+        .sudoku-container input.same-row-col {
+            background-color: #d0d0d0 !important; /* 深灰色，!important覆盖宫格基础颜色 */
+            opacity: 0.8; /* 稍微透明，避免遮挡宫格区分 */
+        }
+
         /* 数字输入区 */
         .number-selector {
             display: flex;
@@ -212,20 +225,21 @@
             background-color: #e0e0e0;
         }
 
-        /* 交互按钮组 - 新增退格键样式 */
+        /* 交互按钮组 - 修改为纵向排列（同一列），文字两字一行 */
         .btn-group {
             display: flex;
-            gap: 10px;
+            flex-direction: column; /* 纵向排列，同一列 */
+            gap: 8px; /* 缩小按钮间距 */
             margin-bottom: 15px;
-            flex-wrap: wrap;
             justify-content: center;
+            align-items: center; /* 按钮居中 */
             width: 100%;
-            max-width: calc(45px * 9 + 4px);
+            max-width: 60px; /* 缩小容器宽度，适配按钮 */
         }
         .btn-group button {
-            width: 80px;
-            height: 80px;
-            font-size: 16px;
+            width: 50px; /* 缩小按钮宽度 */
+            height: 50px; /* 缩小按钮高度 */
+            font-size: 12px; /* 缩小字体 */
             font-weight: bold;
             border: none;
             border-radius: 4px;
@@ -235,6 +249,9 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
+            word-break: break-all; /* 强制文字换行，实现两字一行 */
+            line-height: 1.2; /* 调整行高，让两行文字更美观 */
+            padding: 2px;
         }
         #backspace {
             background-color: #dc3545;
@@ -314,10 +331,13 @@
                 height: calc((100vw - 72px) / 9);
                 font-size: 16px;
             }
+            .btn-group {
+                max-width: 50px; /* 手机端进一步缩小按钮容器 */
+            }
             .btn-group button {
-                width: calc((100vw - 40px) / 5);
-                height: calc((100vw - 40px) / 5);
-                font-size: 14px;
+                width: 45px; /* 手机端缩小按钮 */
+                height: 45px;
+                font-size: 11px;
             }
             .status-area {
                 font-size: 13px;
@@ -345,13 +365,13 @@
         <button class="number-btn" data-num="8">8</button>
         <button class="number-btn" data-num="9">9</button>
     </div>
-    <!-- 功能按钮组 - 新增退格键 -->
+    <!-- 功能按钮组 - 纵向排列 -->
     <div class="btn-group">
-        <button id="backspace">退格键</button>
-        <button id="prevStep" disabled>上一步</button>
-        <button id="nextStep">下一步</button>
-        <button id="clearAll">一键清空</button>
-        <button id="solveAll">一键全解</button>
+        <button id="backspace">退格</button> <!-- 简化文字，更易换行美观 -->
+        <button id="prevStep" disabled>上一</button>
+        <button id="nextStep">下一</button>
+        <button id="clearAll">清空</button>
+        <button id="solveAll">全解</button>
     </div>
     <!-- 状态信息 -->
     <div class="status-area" id="statusArea">请输入数独初始数字，点击「下一步」开始解题</div>
@@ -389,15 +409,58 @@
                     input.readOnly = true; // 禁用输入法唤起
                     input.tabIndex = -1; // 移除焦点唤起键盘
 
-                    // 激活单元格
+                    // 激活单元格，添加高亮和同行同列样式
                     input.onclick = function() {
+                        // 移除之前所有的高亮和同行同列样式
+                        clearCellHighlight();
+                        
+                        // 记录当前激活单元格
                         activeCell = this;
+                        const currentRow = parseInt(this.dataset.row);
+                        const currentCol = parseInt(this.dataset.col);
+                        
+                        // 给当前单元格添加高亮样式
+                        this.classList.add('active-cell');
+                        
+                        // 给同行同列单元格添加深灰色样式
+                        highlightRowCol(currentRow, currentCol);
+                        
+                        // 移除数字按钮的激活状态
                         document.querySelectorAll('.number-btn').forEach(btn => btn.classList.remove('active'));
                     };
 
                     sudokuGrid.appendChild(input);
                 }
             }
+        }
+
+        /**
+         * 清除所有单元格的高亮和同行同列样式
+         */
+        function clearCellHighlight() {
+            const allInputs = sudokuGrid.querySelectorAll('input');
+            allInputs.forEach(input => {
+                input.classList.remove('active-cell');
+                input.classList.remove('same-row-col');
+            });
+        }
+
+        /**
+         * 高亮指定行和列的单元格
+         * @param {number} row - 目标行
+         * @param {number} col - 目标列
+         */
+        function highlightRowCol(row, col) {
+            const allInputs = sudokuGrid.querySelectorAll('input');
+            allInputs.forEach(input => {
+                const inputRow = parseInt(input.dataset.row);
+                const inputCol = parseInt(input.dataset.col);
+                
+                // 同行或同列，且不是当前激活单元格
+                if ((inputRow === row || inputCol === col) && !(inputRow === row && inputCol === col)) {
+                    input.classList.add('same-row-col');
+                }
+            });
         }
 
         /**
@@ -609,6 +672,8 @@
                 input.value = '';
                 input.classList.remove('player-input');
                 input.classList.remove('system-input');
+                input.classList.remove('active-cell'); // 清空时移除高亮样式
+                input.classList.remove('same-row-col'); // 清空时移除同行同列样式
             });
             
             document.getElementById('statusArea').textContent = '已清空所有数字，请重新输入';
