@@ -225,21 +225,22 @@
             background-color: #e0e0e0;
         }
 
-        /* 交互按钮组 - 修改为纵向排列（同一列），文字两字一行 */
+        /* 交互按钮组 - 横排+放大75%+字号不变 */
         .btn-group {
             display: flex;
-            flex-direction: column; /* 纵向排列，同一列 */
-            gap: 8px; /* 缩小按钮间距 */
+            flex-direction: row; /* 横排布局 */
+            gap: 10px; /* 保持合适间距 */
             margin-bottom: 15px;
             justify-content: center;
             align-items: center; /* 按钮居中 */
             width: 100%;
-            max-width: 60px; /* 缩小容器宽度，适配按钮 */
+            max-width: 500px; /* 适配放大后的按钮总宽度 */
+            flex-wrap: wrap; /* 手机端自动换行，避免溢出 */
         }
         .btn-group button {
-            width: 50px; /* 缩小按钮宽度 */
-            height: 50px; /* 缩小按钮高度 */
-            font-size: 12px; /* 缩小字体 */
+            width: 88px; /* 原50px → 放大75%（50×1.75=87.5，取整88px） */
+            height: 88px; /* 同宽度，保持正方形 */
+            font-size: 12px; /* 字号不变 */
             font-weight: bold;
             border: none;
             border-radius: 4px;
@@ -249,9 +250,8 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            word-break: break-all; /* 强制文字换行，实现两字一行 */
-            line-height: 1.2; /* 调整行高，让两行文字更美观 */
-            padding: 2px;
+            padding: 5px;
+            text-align: center; /* 文字居中 */
         }
         #backspace {
             background-color: #dc3545;
@@ -332,12 +332,13 @@
                 font-size: 16px;
             }
             .btn-group {
-                max-width: 50px; /* 手机端进一步缩小按钮容器 */
+                max-width: 100%; /* 手机端占满宽度 */
+                gap: 8px; /* 缩小间距 */
             }
             .btn-group button {
-                width: 45px; /* 手机端缩小按钮 */
-                height: 45px;
-                font-size: 11px;
+                width: 79px; /* 原45px → 放大75%（45×1.75=78.75，取整79px） */
+                height: 79px;
+                font-size: 11px; /* 保持原手机端字号不变 */
             }
             .status-area {
                 font-size: 13px;
@@ -365,13 +366,13 @@
         <button class="number-btn" data-num="8">8</button>
         <button class="number-btn" data-num="9">9</button>
     </div>
-    <!-- 功能按钮组 - 纵向排列 -->
+    <!-- 功能按钮组 - 横排放大版 -->
     <div class="btn-group">
-        <button id="backspace">退格</button> <!-- 简化文字，更易换行美观 -->
-        <button id="prevStep" disabled>上一</button>
-        <button id="nextStep">下一</button>
-        <button id="clearAll">清空</button>
-        <button id="solveAll">全解</button>
+        <button id="backspace">退格键</button> <!-- 恢复完整文字 -->
+        <button id="prevStep" disabled>上一步</button>
+        <button id="nextStep">下一步</button>
+        <button id="clearAll">一键清空</button>
+        <button id="solveAll">一键全解</button>
     </div>
     <!-- 状态信息 -->
     <div class="status-area" id="statusArea">请输入数独初始数字，点击「下一步」开始解题</div>
