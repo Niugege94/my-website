@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>数独直观解题器</title>
     <style>
         * {
@@ -18,27 +18,32 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 15px 0;
+            padding: 15px;
             min-height: 100vh;
+            width: 100%;
+            overflow-x: hidden; /* 禁止横向滚动 */
         }
 
         h1 {
             color: #333;
             font-size: 24px;
             margin-bottom: 15px;
+            text-align: center;
         }
 
-        /* 数独容器 - 严格匹配棋盘格灰白交替 */
+        /* 数独容器 - 适配手机，消除滚动 */
         .sudoku-container {
             display: grid;
             grid-template-columns: repeat(9, 45px);
             grid-template-rows: repeat(9, 45px);
             background-color: #000;
             border: 2px solid #000;
-            margin-bottom: 10px;
+            margin: 0 auto 10px;
+            max-width: 100%; /* 适配手机宽度 */
+            width: fit-content; /* 自适应内容宽度 */
         }
 
-        /* 单元格基础样式 */
+        /* 单元格基础样式 - 禁用输入法唤起 */
         .sudoku-container input {
             width: 45px;
             height: 45px;
@@ -46,125 +51,111 @@
             font-size: 20px;
             border: none;
             outline: none;
+            -webkit-user-select: none; /* 禁止选中文字 */
+            user-select: none;
         }
 
-        /* 以下是9个宫格的颜色，小白可直接替换#后面的数字修改颜色 */
-/* 宫1（左上）：浅灰色 #e8e8e8 */
-.sudoku-container input[data-row="0"][data-col="0"],
-.sudoku-container input[data-row="0"][data-col="1"],
-.sudoku-container input[data-row="0"][data-col="2"],
-.sudoku-container input[data-row="1"][data-col="0"],
-.sudoku-container input[data-row="1"][data-col="1"],
-.sudoku-container input[data-row="1"][data-col="2"],
-.sudoku-container input[data-row="2"][data-col="0"],
-.sudoku-container input[data-row="2"][data-col="1"],
-.sudoku-container input[data-row="2"][data-col="2"] {
-    background-color: #e8e8e8;
-}
+        /* 9个宫格的颜色 */
+        .sudoku-container input[data-row="0"][data-col="0"],
+        .sudoku-container input[data-row="0"][data-col="1"],
+        .sudoku-container input[data-row="0"][data-col="2"],
+        .sudoku-container input[data-row="1"][data-col="0"],
+        .sudoku-container input[data-row="1"][data-col="1"],
+        .sudoku-container input[data-row="1"][data-col="2"],
+        .sudoku-container input[data-row="2"][data-col="0"],
+        .sudoku-container input[data-row="2"][data-col="1"],
+        .sudoku-container input[data-row="2"][data-col="2"] {
+            background-color: #e8e8e8;
+        }
+        .sudoku-container input[data-row="0"][data-col="3"],
+        .sudoku-container input[data-row="0"][data-col="4"],
+        .sudoku-container input[data-row="0"][data-col="5"],
+        .sudoku-container input[data-row="1"][data-col="3"],
+        .sudoku-container input[data-row="1"][data-col="4"],
+        .sudoku-container input[data-row="1"][data-col="5"],
+        .sudoku-container input[data-row="2"][data-col="3"],
+        .sudoku-container input[data-row="2"][data-col="4"],
+        .sudoku-container input[data-row="2"][data-col="5"] {
+            background-color: #ffffff;
+        }
+        .sudoku-container input[data-row="0"][data-col="6"],
+        .sudoku-container input[data-row="0"][data-col="7"],
+        .sudoku-container input[data-row="0"][data-col="8"],
+        .sudoku-container input[data-row="1"][data-col="6"],
+        .sudoku-container input[data-row="1"][data-col="7"],
+        .sudoku-container input[data-row="1"][data-col="8"],
+        .sudoku-container input[data-row="2"][data-col="6"],
+        .sudoku-container input[data-row="2"][data-col="7"],
+        .sudoku-container input[data-row="2"][data-col="8"] {
+            background-color: #e8e8e8;
+        }
+        .sudoku-container input[data-row="3"][data-col="0"],
+        .sudoku-container input[data-row="3"][data-col="1"],
+        .sudoku-container input[data-row="3"][data-col="2"],
+        .sudoku-container input[data-row="4"][data-col="0"],
+        .sudoku-container input[data-row="4"][data-col="1"],
+        .sudoku-container input[data-row="4"][data-col="2"],
+        .sudoku-container input[data-row="5"][data-col="0"],
+        .sudoku-container input[data-row="5"][data-col="1"],
+        .sudoku-container input[data-row="5"][data-col="2"] {
+            background-color: #ffffff;
+        }
+        .sudoku-container input[data-row="3"][data-col="3"],
+        .sudoku-container input[data-row="3"][data-col="4"],
+        .sudoku-container input[data-row="3"][data-col="5"],
+        .sudoku-container input[data-row="4"][data-col="3"],
+        .sudoku-container input[data-row="4"][data-col="4"],
+        .sudoku-container input[data-row="4"][data-col="5"],
+        .sudoku-container input[data-row="5"][data-col="3"],
+        .sudoku-container input[data-row="5"][data-col="4"],
+        .sudoku-container input[data-row="5"][data-col="5"] {
+            background-color: #e8e8e8;
+        }
+        .sudoku-container input[data-row="3"][data-col="6"],
+        .sudoku-container input[data-row="3"][data-col="7"],
+        .sudoku-container input[data-row="3"][data-col="8"],
+        .sudoku-container input[data-row="4"][data-col="6"],
+        .sudoku-container input[data-row="4"][data-col="7"],
+        .sudoku-container input[data-row="4"][data-col="8"],
+        .sudoku-container input[data-row="5"][data-col="6"],
+        .sudoku-container input[data-row="5"][data-col="7"],
+        .sudoku-container input[data-row="5"][data-col="8"] {
+            background-color: #ffffff;
+        }
+        .sudoku-container input[data-row="6"][data-col="0"],
+        .sudoku-container input[data-row="6"][data-col="1"],
+        .sudoku-container input[data-row="6"][data-col="2"],
+        .sudoku-container input[data-row="7"][data-col="0"],
+        .sudoku-container input[data-row="7"][data-col="1"],
+        .sudoku-container input[data-row="7"][data-col="2"],
+        .sudoku-container input[data-row="8"][data-col="0"],
+        .sudoku-container input[data-row="8"][data-col="1"],
+        .sudoku-container input[data-row="8"][data-col="2"] {
+            background-color: #e8e8e8;
+        }
+        .sudoku-container input[data-row="6"][data-col="3"],
+        .sudoku-container input[data-row="6"][data-col="4"],
+        .sudoku-container input[data-row="6"][data-col="5"],
+        .sudoku-container input[data-row="7"][data-col="3"],
+        .sudoku-container input[data-row="7"][data-col="4"],
+        .sudoku-container input[data-row="7"][data-col="5"],
+        .sudoku-container input[data-row="8"][data-col="3"],
+        .sudoku-container input[data-row="8"][data-col="4"],
+        .sudoku-container input[data-row="8"][data-col="5"] {
+            background-color: #ffffff;
+        }
+        .sudoku-container input[data-row="6"][data-col="6"],
+        .sudoku-container input[data-row="6"][data-col="7"],
+        .sudoku-container input[data-row="6"][data-col="8"],
+        .sudoku-container input[data-row="7"][data-col="6"],
+        .sudoku-container input[data-row="7"][data-col="7"],
+        .sudoku-container input[data-row="7"][data-col="8"],
+        .sudoku-container input[data-row="8"][data-col="6"],
+        .sudoku-container input[data-row="8"][data-col="7"],
+        .sudoku-container input[data-row="8"][data-col="8"] {
+            background-color: #e8e8e8;
+        }
 
-/* 宫2（上中）：白色 #ffffff */
-.sudoku-container input[data-row="0"][data-col="3"],
-.sudoku-container input[data-row="0"][data-col="4"],
-.sudoku-container input[data-row="0"][data-col="5"],
-.sudoku-container input[data-row="1"][data-col="3"],
-.sudoku-container input[data-row="1"][data-col="4"],
-.sudoku-container input[data-row="1"][data-col="5"],
-.sudoku-container input[data-row="2"][data-col="3"],
-.sudoku-container input[data-row="2"][data-col="4"],
-.sudoku-container input[data-row="2"][data-col="5"] {
-    background-color: #ffffff;
-}
-
-/* 宫3（右上）：浅灰色 #e8e8e8 */
-.sudoku-container input[data-row="0"][data-col="6"],
-.sudoku-container input[data-row="0"][data-col="7"],
-.sudoku-container input[data-row="0"][data-col="8"],
-.sudoku-container input[data-row="1"][data-col="6"],
-.sudoku-container input[data-row="1"][data-col="7"],
-.sudoku-container input[data-row="1"][data-col="8"],
-.sudoku-container input[data-row="2"][data-col="6"],
-.sudoku-container input[data-row="2"][data-col="7"],
-.sudoku-container input[data-row="2"][data-col="8"] {
-    background-color: #e8e8e8;
-}
-
-/* 宫4（左中）：白色 #ffffff */
-.sudoku-container input[data-row="3"][data-col="0"],
-.sudoku-container input[data-row="3"][data-col="1"],
-.sudoku-container input[data-row="3"][data-col="2"],
-.sudoku-container input[data-row="4"][data-col="0"],
-.sudoku-container input[data-row="4"][data-col="1"],
-.sudoku-container input[data-row="4"][data-col="2"],
-.sudoku-container input[data-row="5"][data-col="0"],
-.sudoku-container input[data-row="5"][data-col="1"],
-.sudoku-container input[data-row="5"][data-col="2"] {
-    background-color: #ffffff;
-}
-
-/* 宫5（中间）：浅灰色 #e8e8e8 */
-.sudoku-container input[data-row="3"][data-col="3"],
-.sudoku-container input[data-row="3"][data-col="4"],
-.sudoku-container input[data-row="3"][data-col="5"],
-.sudoku-container input[data-row="4"][data-col="3"],
-.sudoku-container input[data-row="4"][data-col="4"],
-.sudoku-container input[data-row="4"][data-col="5"],
-.sudoku-container input[data-row="5"][data-col="3"],
-.sudoku-container input[data-row="5"][data-col="4"],
-.sudoku-container input[data-row="5"][data-col="5"] {
-    background-color: #e8e8e8;
-}
-
-/* 宫6（右中）：白色 #ffffff */
-.sudoku-container input[data-row="3"][data-col="6"],
-.sudoku-container input[data-row="3"][data-col="7"],
-.sudoku-container input[data-row="3"][data-col="8"],
-.sudoku-container input[data-row="4"][data-col="6"],
-.sudoku-container input[data-row="4"][data-col="7"],
-.sudoku-container input[data-row="4"][data-col="8"],
-.sudoku-container input[data-row="5"][data-col="6"],
-.sudoku-container input[data-row="5"][data-col="7"],
-.sudoku-container input[data-row="5"][data-col="8"] {
-    background-color: #ffffff;
-}
-
-/* 宫7（左下）：浅灰色 #e8e8e8 */
-.sudoku-container input[data-row="6"][data-col="0"],
-.sudoku-container input[data-row="6"][data-col="1"],
-.sudoku-container input[data-row="6"][data-col="2"],
-.sudoku-container input[data-row="7"][data-col="0"],
-.sudoku-container input[data-row="7"][data-col="1"],
-.sudoku-container input[data-row="7"][data-col="2"],
-.sudoku-container input[data-row="8"][data-col="0"],
-.sudoku-container input[data-row="8"][data-col="1"],
-.sudoku-container input[data-row="8"][data-col="2"] {
-    background-color: #e8e8e8;
-}
-
-/* 宫8（下中）：白色 #ffffff */
-.sudoku-container input[data-row="6"][data-col="3"],
-.sudoku-container input[data-row="6"][data-col="4"],
-.sudoku-container input[data-row="6"][data-col="5"],
-.sudoku-container input[data-row="7"][data-col="3"],
-.sudoku-container input[data-row="7"][data-col="4"],
-.sudoku-container input[data-row="7"][data-col="5"],
-.sudoku-container input[data-row="8"][data-col="3"],
-.sudoku-container input[data-row="8"][data-col="4"],
-.sudoku-container input[data-row="8"][data-col="5"] {
-    background-color: #ffffff;
-}
-
-/* 宫9（右下）：浅灰色 #e8e8e8 */
-.sudoku-container input[data-row="6"][data-col="6"],
-.sudoku-container input[data-row="6"][data-col="7"],
-.sudoku-container input[data-row="6"][data-col="8"],
-.sudoku-container input[data-row="7"][data-col="6"],
-.sudoku-container input[data-row="7"][data-col="7"],
-.sudoku-container input[data-row="7"][data-col="8"],
-.sudoku-container input[data-row="8"][data-col="6"],
-.sudoku-container input[data-row="8"][data-col="7"],
-.sudoku-container input[data-row="8"][data-col="8"] {
-    background-color: #e8e8e8;
-}
         /* 宫间粗线条分隔 */
         .sudoku-container input:nth-child(3n) {
             border-right: 2px solid #000 !important;
@@ -192,12 +183,14 @@
             font-weight: bold;
         }
 
-        /* 数字输入区 - 正方形按钮，字体加粗放大，无边框 */
+        /* 数字输入区 */
         .number-selector {
             display: flex;
             gap: 8px;
             justify-content: center;
             margin-bottom: 15px;
+            width: 100%;
+            max-width: calc(45px * 9 + 4px);
         }
         .number-btn {
             width: 40px;
@@ -213,18 +206,21 @@
             justify-content: center;
             transition: background-color 0.2s;
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            flex-shrink: 0; /* 防止按钮被压缩 */
         }
         .number-btn:hover, .number-btn.active {
             background-color: #e0e0e0;
         }
 
-        /* 交互按钮组 - 正方形按钮 */
+        /* 交互按钮组 - 新增退格键样式 */
         .btn-group {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
+            max-width: calc(45px * 9 + 4px);
         }
         .btn-group button {
             width: 80px;
@@ -238,6 +234,18 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
+        }
+        #backspace {
+            background-color: #dc3545;
+            color: #fff;
+        }
+        #backspace:hover {
+            background-color: #c82333;
+        }
+        #backspace:disabled {
+            background-color: #dc888f;
+            cursor: not-allowed;
         }
         #prevStep {
             background-color: #6c757d;
@@ -276,9 +284,10 @@
             background-color: #00b359;
         }
 
-        /* 状态信息 */
+        /* 状态信息 - 适配手机 */
         .status-area {
-            width: calc(45px * 9 + 4px);
+            width: 100%;
+            max-width: calc(45px * 9 + 4px);
             padding: 12px;
             background-color: #fff;
             border-radius: 5px;
@@ -287,32 +296,35 @@
             color: #333;
             font-size: 14px;
             text-align: center;
-            margin: 0 10px;
         }
 
-        /* 响应式适配 */
+        /* 响应式适配 - 优化手机显示 */
         @media (max-width: 500px) {
             .sudoku-container {
-                grid-template-columns: repeat(9, 40px);
-                grid-template-rows: repeat(9, 40px);
+                grid-template-columns: repeat(9, calc((100vw - 30px) / 9)); /* 适配手机宽度 */
+                grid-template-rows: repeat(9, calc((100vw - 30px) / 9));
             }
             .sudoku-container input {
-                width: 40px;
-                height: 40px;
+                width: 100%;
+                height: 100%;
                 font-size: 18px;
             }
             .number-btn {
-                width: 35px;
-                height: 35px;
+                width: calc((100vw - 72px) / 9);
+                height: calc((100vw - 72px) / 9);
                 font-size: 16px;
             }
             .btn-group button {
-                width: 70px;
-                height: 70px;
+                width: calc((100vw - 40px) / 5);
+                height: calc((100vw - 40px) / 5);
                 font-size: 14px;
             }
             .status-area {
-                width: calc(40px * 9 + 4px);
+                font-size: 13px;
+                padding: 10px;
+            }
+            h1 {
+                font-size: 20px;
             }
         }
     </style>
@@ -333,8 +345,9 @@
         <button class="number-btn" data-num="8">8</button>
         <button class="number-btn" data-num="9">9</button>
     </div>
-    <!-- 功能按钮组 -->
+    <!-- 功能按钮组 - 新增退格键 -->
     <div class="btn-group">
+        <button id="backspace">退格键</button>
         <button id="prevStep" disabled>上一步</button>
         <button id="nextStep">下一步</button>
         <button id="clearAll">一键清空</button>
@@ -350,17 +363,19 @@
         let history = [];
         let currentStep = -1;
         let activeCell = null;
-        let correctSolution = null; // 新增：存储正确的完整解
+        let correctSolution = null;
+        let inputHistory = []; // 记录输入历史，用于退格
 
         // 页面加载完成后初始化
         window.onload = function() {
             initSudokuGrid();
             bindButtonEvents();
             bindNumberSelector();
+            updateButtonStates(); // 初始化按钮状态
         };
 
         /**
-         * 初始化数独网格
+         * 初始化数独网格 - 禁用输入法唤起
          */
         function initSudokuGrid() {
             sudokuGrid = document.getElementById('sudokuGrid');
@@ -371,29 +386,13 @@
                     input.maxLength = 1;
                     input.dataset.row = row;
                     input.dataset.col = col;
+                    input.readOnly = true; // 禁用输入法唤起
+                    input.tabIndex = -1; // 移除焦点唤起键盘
 
                     // 激活单元格
                     input.onclick = function() {
                         activeCell = this;
                         document.querySelectorAll('.number-btn').forEach(btn => btn.classList.remove('active'));
-                    };
-
-                    // 输入事件处理
-                    input.oninput = function() {
-                        this.value = this.value.replace(/[^1-9]/g, '');
-                        const row = parseInt(this.dataset.row);
-                        const col = parseInt(this.dataset.col);
-                        sudokuData[row][col] = this.value;
-
-                        if (this.value) {
-                            this.classList.add('player-input');
-                            this.classList.remove('system-input');
-                        } else {
-                            this.classList.remove('player-input');
-                            this.classList.remove('system-input');
-                        }
-                        
-                        resetHistory();
                     };
 
                     sudokuGrid.appendChild(input);
@@ -412,28 +411,73 @@
                     const num = this.dataset.num;
                     const row = parseInt(activeCell.dataset.row);
                     const col = parseInt(activeCell.dataset.col);
+                    const oldValue = sudokuData[row][col];
+
+                    // 记录输入历史（仅当值变化时）
+                    if (oldValue !== num) {
+                        inputHistory.push({
+                            row: row,
+                            col: col,
+                            oldValue: oldValue
+                        });
+                    }
                     
+                    // 更新数据和DOM
                     activeCell.value = num;
                     sudokuData[row][col] = num;
                     activeCell.classList.add('player-input');
                     activeCell.classList.remove('system-input');
                     
-                    resetHistory();
+                    resetHistory(); // 输入新数字重置解题历史
                     
                     document.querySelectorAll('.number-btn').forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
+                    updateButtonStates(); // 更新退格键状态
                 };
             });
         }
 
         /**
-         * 绑定功能按钮事件
+         * 绑定功能按钮事件 - 新增退格键绑定
          */
         function bindButtonEvents() {
+            document.getElementById('backspace').onclick = backspaceLastInput;
             document.getElementById('prevStep').onclick = prevStep;
             document.getElementById('nextStep').onclick = nextStep;
             document.getElementById('clearAll').onclick = clearAllSudoku;
             document.getElementById('solveAll').onclick = solveAllSudoku;
+        }
+
+        /**
+         * 退格键功能 - 删除最近一次输入
+         */
+        function backspaceLastInput() {
+            if (inputHistory.length === 0) {
+                document.getElementById('statusArea').textContent = '暂无可删除的输入记录';
+                return;
+            }
+
+            // 取出最后一次输入记录
+            const lastInput = inputHistory.pop();
+            const { row, col, oldValue } = lastInput;
+
+            // 恢复数据
+            sudokuData[row][col] = oldValue;
+            const input = document.querySelector(`input[data-row="${row}"][data-col="${col}"]`);
+            input.value = oldValue || '';
+            
+            // 恢复样式
+            if (oldValue) {
+                input.classList.add('player-input');
+            } else {
+                input.classList.remove('player-input');
+                input.classList.remove('system-input');
+            }
+
+            // 重置解题历史
+            resetHistory();
+            document.getElementById('statusArea').textContent = `已删除最近一次输入（行${row+1}列${col+1}）`;
+            updateButtonStates();
         }
 
         /**
@@ -442,17 +486,19 @@
         function resetHistory() {
             history = [];
             currentStep = -1;
-            correctSolution = null; // 重置正确解
+            correctSolution = null;
             updateButtonStates();
         }
 
         /**
-         * 更新按钮状态
+         * 更新按钮状态 - 包含退格键
          */
         function updateButtonStates() {
+            const backspaceBtn = document.getElementById('backspace');
             const prevBtn = document.getElementById('prevStep');
             const nextBtn = document.getElementById('nextStep');
             
+            backspaceBtn.disabled = inputHistory.length === 0;
             prevBtn.disabled = currentStep <= 0;
             nextBtn.disabled = isSudokuComplete() && currentStep === history.length - 1;
         }
@@ -473,22 +519,22 @@
         }
 
         /**
-         * 下一步（核心修改）
+         * 下一步（核心逻辑）
          */
         function nextStep() {
             const statusArea = document.getElementById('statusArea');
             
-            // 1. 首次点击下一步时，先生成正确的完整解
+            // 首次点击下一步时，先生成正确的完整解
             if (!correctSolution) {
                 const sudokuCopy = JSON.parse(JSON.stringify(sudokuData));
                 if (!backtrackSolve(sudokuCopy)) {
                     statusArea.textContent = '当前数独无解（可能输入的数字存在冲突）';
                     return;
                 }
-                correctSolution = sudokuCopy; // 存储正确解（不显示）
+                correctSolution = sudokuCopy;
             }
 
-            // 2. 保存当前状态到历史
+            // 保存当前状态到历史
             if (currentStep === history.length - 1) {
                 history.push({
                     grid: JSON.parse(JSON.stringify(sudokuData))
@@ -496,21 +542,30 @@
             }
             currentStep++;
 
-            // 3. 找到第一个空缺位置，填入正确解的数字
+            // 找到第一个空缺位置，填入正确解的数字
             let filled = false;
+            let fillRow = -1, fillCol = -1;
             for (let row = 0; row < 9 && !filled; row++) {
                 for (let col = 0; col < 9 && !filled; col++) {
                     if (sudokuData[row][col] === '') {
+                        // 记录系统输入的历史
+                        inputHistory.push({
+                            row: row,
+                            col: col,
+                            oldValue: ''
+                        });
                         sudokuData[row][col] = correctSolution[row][col];
                         filled = true;
+                        fillRow = row;
+                        fillCol = col;
                     }
                 }
             }
 
-            // 4. 更新DOM和状态
+            // 更新DOM和状态
             updateSudokuDOM();
             if (filled) {
-                statusArea.textContent = `第 ${currentStep + 1} 步：填入一个正确数字`;
+                statusArea.textContent = `第 ${currentStep + 1} 步：在行${fillRow+1}列${fillCol+1}填入数字${correctSolution[fillRow][fillCol]}`;
             } else {
                 statusArea.textContent = '恭喜！数独已经全部解答完成！';
             }
@@ -546,6 +601,7 @@
          */
         function clearAllSudoku() {
             sudokuData = Array(9).fill().map(() => Array(9).fill(''));
+            inputHistory = []; // 清空输入历史
             resetHistory();
             
             const allInputs = sudokuGrid.querySelectorAll('input');
@@ -558,6 +614,7 @@
             document.getElementById('statusArea').textContent = '已清空所有数字，请重新输入';
             activeCell = null;
             document.querySelectorAll('.number-btn').forEach(btn => btn.classList.remove('active'));
+            updateButtonStates();
         }
 
         /**
@@ -568,8 +625,21 @@
             const sudokuCopy = JSON.parse(JSON.stringify(sudokuData));
             
             if (backtrackSolve(sudokuCopy)) {
+                // 记录所有系统输入的历史
+                for (let row = 0; row < 9; row++) {
+                    for (let col = 0; col < 9; col++) {
+                        if (sudokuData[row][col] === '' && sudokuCopy[row][col] !== '') {
+                            inputHistory.push({
+                                row: row,
+                                col: col,
+                                oldValue: ''
+                            });
+                        }
+                    }
+                }
+                
                 sudokuData = sudokuCopy;
-                correctSolution = sudokuCopy; // 同步正确解
+                correctSolution = sudokuCopy;
                 updateSudokuDOM();
                 resetHistory();
                 statusArea.textContent = '数独已一键解答完成！';
@@ -581,7 +651,7 @@
         }
 
         /**
-         * 回溯算法（原逻辑保留，保证一键全解正常）
+         * 回溯算法（解数独）
          */
         function backtrackSolve(board) {
             let emptyCell = null;
@@ -670,17 +740,6 @@
             }
             return true;
         }
-
-        // 以下为原逐步解题方法（保留但不再使用，如需可自行扩展）
-        function solveByBoxElimination() { /* 原逻辑保留 */ }
-        function solveByLineElimination() { /* 原逻辑保留 */ }
-        function solveByBlockElimination() { /* 原逻辑保留 */ }
-        function solveByPairElimination() { /* 原逻辑保留 */ }
-        function solveByOnlyCandidate() { /* 原逻辑保留 */ }
-        function getCandidates(row, col) { /* 原逻辑保留 */ }
-        function isInRow(row, num) { /* 原逻辑保留 */ }
-        function isInCol(col, num) { /* 原逻辑保留 */ }
-        function isInBox(row, col, num) { /* 原逻辑保留 */ }
     </script>
 </body>
 </html>
