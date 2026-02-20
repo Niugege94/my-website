@@ -1,360 +1,173 @@
-<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>数独直观解题器</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Microsoft YaHei", sans-serif;
-            touch-action: manipulation;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:"Microsoft YaHei",sans-serif; touch-action:manipulation; }
+        body { background-color:#f5f5f5; display:flex; flex-direction:column; align-items:center; padding:20px; }
+        h1 { color:#333; margin-bottom:8px; }
 
-        body {
-            background-color: #f5f5f5;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 15px;
-            min-height: 100vh;
-            width: 100%;
-            overflow-x: hidden; /* 禁止横向滚动 */
-        }
-
-        h1 {
-            color: #333;
-            font-size: 24px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        /* 数独容器 - 适配手机，消除滚动 */
-        .sudoku-container {
-            display: grid;
-            grid-template-columns: repeat(9, 45px);
-            grid-template-rows: repeat(9, 45px);
-            background-color: #000;
-            border: 2px solid #000;
-            margin: 0 auto 10px;
-            max-width: 100%; /* 适配手机宽度 */
-            width: fit-content; /* 自适应内容宽度 */
-        }
-
-        /* 单元格基础样式 - 禁用输入法唤起 */
-        .sudoku-container input {
-            width: 45px;
-            height: 45px;
-            text-align: center;
-            font-size: 20px;
-            border: none;
-            outline: none;
-            -webkit-user-select: none; /* 禁止选中文字 */
-            user-select: none;
-            transition: background-color 0.2s ease; /* 过渡效果，更顺滑 */
-        }
-
-        /* 9个宫格的基础颜色 */
-        .sudoku-container input[data-row="0"][data-col="0"],
-        .sudoku-container input[data-row="0"][data-col="1"],
-        .sudoku-container input[data-row="0"][data-col="2"],
-        .sudoku-container input[data-row="1"][data-col="0"],
-        .sudoku-container input[data-row="1"][data-col="1"],
-        .sudoku-container input[data-row="1"][data-col="2"],
-        .sudoku-container input[data-row="2"][data-col="0"],
-        .sudoku-container input[data-row="2"][data-col="1"],
-        .sudoku-container input[data-row="2"][data-col="2"] {
-            background-color: #e8e8e8;
-        }
-        .sudoku-container input[data-row="0"][data-col="3"],
-        .sudoku-container input[data-row="0"][data-col="4"],
-        .sudoku-container input[data-row="0"][data-col="5"],
-        .sudoku-container input[data-row="1"][data-col="3"],
-        .sudoku-container input[data-row="1"][data-col="4"],
-        .sudoku-container input[data-row="1"][data-col="5"],
-        .sudoku-container input[data-row="2"][data-col="3"],
-        .sudoku-container input[data-row="2"][data-col="4"],
-        .sudoku-container input[data-row="2"][data-col="5"] {
-            background-color: #ffffff;
-        }
-        .sudoku-container input[data-row="0"][data-col="6"],
-        .sudoku-container input[data-row="0"][data-col="7"],
-        .sudoku-container input[data-row="0"][data-col="8"],
-        .sudoku-container input[data-row="1"][data-col="6"],
-        .sudoku-container input[data-row="1"][data-col="7"],
-        .sudoku-container input[data-row="1"][data-col="8"],
-        .sudoku-container input[data-row="2"][data-col="6"],
-        .sudoku-container input[data-row="2"][data-col="7"],
-        .sudoku-container input[data-row="2"][data-col="8"] {
-            background-color: #e8e8e8;
-        }
-        .sudoku-container input[data-row="3"][data-col="0"],
-        .sudoku-container input[data-row="3"][data-col="1"],
-        .sudoku-container input[data-row="3"][data-col="2"],
-        .sudoku-container input[data-row="4"][data-col="0"],
-        .sudoku-container input[data-row="4"][data-col="1"],
-        .sudoku-container input[data-row="4"][data-col="2"],
-        .sudoku-container input[data-row="5"][data-col="0"],
-        .sudoku-container input[data-row="5"][data-col="1"],
-        .sudoku-container input[data-row="5"][data-col="2"] {
-            background-color: #ffffff;
-        }
-        .sudoku-container input[data-row="3"][data-col="3"],
-        .sudoku-container input[data-row="3"][data-col="4"],
-        .sudoku-container input[data-row="3"][data-col="5"],
-        .sudoku-container input[data-row="4"][data-col="3"],
-        .sudoku-container input[data-row="4"][data-col="4"],
-        .sudoku-container input[data-row="4"][data-col="5"],
-        .sudoku-container input[data-row="5"][data-col="3"],
-        .sudoku-container input[data-row="5"][data-col="4"],
-        .sudoku-container input[data-row="5"][data-col="5"] {
-            background-color: #e8e8e8;
-        }
-        .sudoku-container input[data-row="3"][data-col="6"],
-        .sudoku-container input[data-row="3"][data-col="7"],
-        .sudoku-container input[data-row="3"][data-col="8"],
-        .sudoku-container input[data-row="4"][data-col="6"],
-        .sudoku-container input[data-row="4"][data-col="7"],
-        .sudoku-container input[data-row="4"][data-col="8"],
-        .sudoku-container input[data-row="5"][data-col="6"],
-        .sudoku-container input[data-row="5"][data-col="7"],
-        .sudoku-container input[data-row="5"][data-col="8"] {
-            background-color: #ffffff;
-        }
-        .sudoku-container input[data-row="6"][data-col="0"],
-        .sudoku-container input[data-row="6"][data-col="1"],
-        .sudoku-container input[data-row="6"][data-col="2"],
-        .sudoku-container input[data-row="7"][data-col="0"],
-        .sudoku-container input[data-row="7"][data-col="1"],
-        .sudoku-container input[data-row="7"][data-col="2"],
-        .sudoku-container input[data-row="8"][data-col="0"],
-        .sudoku-container input[data-row="8"][data-col="1"],
-        .sudoku-container input[data-row="8"][data-col="2"] {
-            background-color: #e8e8e8;
-        }
-        .sudoku-container input[data-row="6"][data-col="3"],
-        .sudoku-container input[data-row="6"][data-col="4"],
-        .sudoku-container input[data-row="6"][data-col="5"],
-        .sudoku-container input[data-row="7"][data-col="3"],
-        .sudoku-container input[data-row="7"][data-col="4"],
-        .sudoku-container input[data-row="7"][data-col="5"],
-        .sudoku-container input[data-row="8"][data-col="3"],
-        .sudoku-container input[data-row="8"][data-col="4"],
-        .sudoku-container input[data-row="8"][data-col="5"] {
-            background-color: #ffffff;
-        }
-        .sudoku-container input[data-row="6"][data-col="6"],
-        .sudoku-container input[data-row="6"][data-col="7"],
-        .sudoku-container input[data-row="6"][data-col="8"],
-        .sudoku-container input[data-row="7"][data-col="6"],
-        .sudoku-container input[data-row="7"][data-col="7"],
-        .sudoku-container input[data-row="7"][data-col="8"],
-        .sudoku-container input[data-row="8"][data-col="6"],
-        .sudoku-container input[data-row="8"][data-col="7"],
-        .sudoku-container input[data-row="8"][data-col="8"] {
-            background-color: #e8e8e8;
-        }
-
-        /* 宫间粗线条分隔 */
-        .sudoku-container input:nth-child(3n) {
-            border-right: 2px solid #000 !important;
-        }
-        .sudoku-container input:nth-child(n+19):nth-child(-n+27),
-        .sudoku-container input:nth-child(n+46):nth-child(-n+54) {
-            border-bottom: 2px solid #000 !important;
-        }
-
-        /* 宫内细线条分隔 */
-        .sudoku-container input:not(:nth-child(3n)) {
-            border-right: 1px solid #ccc;
-        }
-        .sudoku-container input:not(:nth-child(n+19):nth-child(-n+27)):not(:nth-child(n+46):nth-child(-n+54)) {
-            border-bottom: 1px solid #ccc;
-        }
-
-        /* 输入样式区分 */
-        .sudoku-container input.player-input {
-            font-weight: bold;
-            color: #0066cc;
-        }
-        .sudoku-container input.system-input {
-            color: #cc3300;
-            font-weight: bold;
-        }
-
-        /* 新增：选中单元格高亮（淡绿色） */
-        .sudoku-container input.active-cell {
-            background-color: #b7f0b7 !important; /* 淡绿色，!important覆盖宫格基础颜色 */
-            border: 2px solid #66cc66 !important; /* 增加边框，更醒目 */
-        }
-
-        /* 新增：选中单元格的同行同列（深灰色） */
-        .sudoku-container input.same-row-col {
-            background-color: #d0d0d0 !important; /* 深灰色，!important覆盖宫格基础颜色 */
-            opacity: 0.8; /* 稍微透明，避免遮挡宫格区分 */
-        }
-
-        /* 数字输入区 */
-        .number-selector {
-            display: flex;
-            gap: 8px;
-            justify-content: center;
-            margin-bottom: 15px;
-            width: 100%;
-            max-width: calc(45px * 9 + 4px);
-        }
-        .number-btn {
-            width: 40px;
-            height: 40px;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            border-radius: 0;
-            background-color: #fff;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background-color 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-            flex-shrink: 0; /* 防止按钮被压缩 */
-        }
-        .number-btn:hover, .number-btn.active {
-            background-color: #e0e0e0;
-        }
-
-        /* 交互按钮组 - 横排+放大75%+字号不变 */
-        .btn-group {
-            display: flex;
-            flex-direction: row; /* 横排布局 */
-            gap: 10px; /* 保持合适间距 */
-            margin-bottom: 15px;
-            justify-content: center;
-            align-items: center; /* 按钮居中 */
-            width: 100%;
-            max-width: 500px; /* 适配放大后的按钮总宽度 */
-            flex-wrap: wrap; /* 手机端自动换行，避免溢出 */
-        }
-        .btn-group button {
-            width: 88px; /* 原50px → 放大75%（50×1.75=87.5，取整88px） */
-            height: 88px; /* 同宽度，保持正方形 */
-            font-size: 12px; /* 字号不变 */
-            font-weight: bold;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            padding: 5px;
-            text-align: center; /* 文字居中 */
-        }
-        #backspace {
-            background-color: #dc3545;
-            color: #fff;
-        }
-        #backspace:hover {
-            background-color: #c82333;
-        }
-        #backspace:disabled {
-            background-color: #dc888f;
-            cursor: not-allowed;
-        }
-        #prevStep {
-            background-color: #6c757d;
-            color: #fff;
-        }
-        #prevStep:hover {
-            background-color: #5a6268;
-        }
-        #prevStep:disabled {
-            background-color: #adb5bd;
-            cursor: not-allowed;
-        }
-        #nextStep {
-            background-color: #0066cc;
-            color: #fff;
-        }
-        #nextStep:hover {
-            background-color: #0052aa;
-        }
-        #nextStep:disabled {
-            background-color: #6699cc;
-            cursor: not-allowed;
-        }
-        #clearAll {
-            background-color: #ff9900;
-            color: #fff;
-        }
-        #clearAll:hover {
-            background-color: #e68a00;
-        }
-        #solveAll {
-            background-color: #00cc66;
-            color: #fff;
-        }
-        #solveAll:hover {
-            background-color: #00b359;
-        }
-
-        /* 状态信息 - 适配手机 */
         .status-area {
-            width: 100%;
-            max-width: calc(45px * 9 + 4px);
-            padding: 12px;
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            min-height: 45px;
-            color: #333;
-            font-size: 14px;
-            text-align: center;
+            padding:10px 20px; background:#fff; border-radius:5px;
+            box-shadow:0 2px 5px rgba(0,0,0,0.1); min-height:40px;
+            color:#333; font-size:16px; text-align:center;
+            margin-bottom:12px; width:100%; max-width:411px; word-break:break-all;
         }
 
-        /* 响应式适配 - 优化手机显示 */
-        @media (max-width: 500px) {
-            .sudoku-container {
-                grid-template-columns: repeat(9, calc((100vw - 30px) / 9)); /* 适配手机宽度 */
-                grid-template-rows: repeat(9, calc((100vw - 30px) / 9));
+        .grid-wrapper { position:relative; display:inline-block; margin-bottom:10px; }
+
+        .sudoku-container {
+            display:grid;
+            grid-template-columns:repeat(9,45px);
+            grid-template-rows:repeat(9,45px);
+            border:2px solid #000; gap:0;
+        }
+
+        #svgOverlay {
+            position:absolute; top:0; left:0;
+            pointer-events:none; z-index:20; overflow:visible;
+        }
+
+        .cell-wrapper { position:relative; width:45px; height:45px; overflow:hidden; }
+
+        .background-block {
+            position:absolute; top:0; left:0; width:100%; height:100%;
+            z-index:1; border:1px solid #ccc; transition:background-color 0.15s;
+        }
+
+        .cell-wrapper:nth-child(n+1):nth-child(-n+27):nth-child(9n+1) .background-block,
+        .cell-wrapper:nth-child(n+1):nth-child(-n+27):nth-child(9n+2) .background-block,
+        .cell-wrapper:nth-child(n+1):nth-child(-n+27):nth-child(9n+3) .background-block{background-color:#e8e8e8}
+        .cell-wrapper:nth-child(n+1):nth-child(-n+27):nth-child(9n+4) .background-block,
+        .cell-wrapper:nth-child(n+1):nth-child(-n+27):nth-child(9n+5) .background-block,
+        .cell-wrapper:nth-child(n+1):nth-child(-n+27):nth-child(9n+6) .background-block{background-color:#fff}
+        .cell-wrapper:nth-child(n+1):nth-child(-n+27):nth-child(9n+7) .background-block,
+        .cell-wrapper:nth-child(n+1):nth-child(-n+27):nth-child(9n+8) .background-block,
+        .cell-wrapper:nth-child(n+1):nth-child(-n+27):nth-child(9n+9) .background-block{background-color:#e8e8e8}
+
+        .cell-wrapper:nth-child(n+28):nth-child(-n+54):nth-child(9n+1) .background-block,
+        .cell-wrapper:nth-child(n+28):nth-child(-n+54):nth-child(9n+2) .background-block,
+        .cell-wrapper:nth-child(n+28):nth-child(-n+54):nth-child(9n+3) .background-block{background-color:#fff}
+        .cell-wrapper:nth-child(n+28):nth-child(-n+54):nth-child(9n+4) .background-block,
+        .cell-wrapper:nth-child(n+28):nth-child(-n+54):nth-child(9n+5) .background-block,
+        .cell-wrapper:nth-child(n+28):nth-child(-n+54):nth-child(9n+6) .background-block{background-color:#e8e8e8}
+        .cell-wrapper:nth-child(n+28):nth-child(-n+54):nth-child(9n+7) .background-block,
+        .cell-wrapper:nth-child(n+28):nth-child(-n+54):nth-child(9n+8) .background-block,
+        .cell-wrapper:nth-child(n+28):nth-child(-n+54):nth-child(9n+9) .background-block{background-color:#fff}
+
+        .cell-wrapper:nth-child(n+55):nth-child(-n+81):nth-child(9n+1) .background-block,
+        .cell-wrapper:nth-child(n+55):nth-child(-n+81):nth-child(9n+2) .background-block,
+        .cell-wrapper:nth-child(n+55):nth-child(-n+81):nth-child(9n+3) .background-block{background-color:#e8e8e8}
+        .cell-wrapper:nth-child(n+55):nth-child(-n+81):nth-child(9n+4) .background-block,
+        .cell-wrapper:nth-child(n+55):nth-child(-n+81):nth-child(9n+5) .background-block,
+        .cell-wrapper:nth-child(n+55):nth-child(-n+81):nth-child(9n+6) .background-block{background-color:#fff}
+        .cell-wrapper:nth-child(n+55):nth-child(-n+81):nth-child(9n+7) .background-block,
+        .cell-wrapper:nth-child(n+55):nth-child(-n+81):nth-child(9n+8) .background-block,
+        .cell-wrapper:nth-child(n+55):nth-child(-n+81):nth-child(9n+9) .background-block{background-color:#e8e8e8}
+
+        .cell-wrapper:nth-child(9n+3) .background-block{border-right:2px solid #000!important}
+        .cell-wrapper:nth-child(9n+6) .background-block{border-right:2px solid #000!important}
+        .cell-wrapper:nth-child(9n+9) .background-block{border-right:none!important}
+        .cell-wrapper:nth-child(n+19):nth-child(-n+27) .background-block{border-bottom:2px solid #000!important}
+        .cell-wrapper:nth-child(n+46):nth-child(-n+54) .background-block{border-bottom:2px solid #000!important}
+        .cell-wrapper:nth-child(n+73):nth-child(-n+81) .background-block{border-bottom:none!important}
+
+        .background-block.same-row-col{background-color:#d0d0d0!important}
+        .background-block.target-hl{background-color:rgba(183,240,183,0.8)!important}
+
+        .candidate-block {
+            position:absolute; top:0; left:0; width:100%; height:100%;
+            z-index:11; display:grid;
+            grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(3,1fr);
+            pointer-events:none;
+        }
+        .candidate-num {
+            font-size:8px; color:#333; text-align:center;
+            line-height:15px; font-weight:600; position:relative;
+        }
+        .candidate-num.elim{ color:rgba(0,0,0,0.2); }
+/* 不再在候选小格里画小X */
+.candidate-num.elim::after { content:''; }
+/* 在整格中央画大X（约75%视觉占比） */
+.cell-wrapper.elim-cell::after{
+    content:'×';
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    color:#ff0000;
+    font-size:34px;      /* 45px格子的约75% */
+    font-weight:700;
+    line-height:1;
+    z-index:18;
+    pointer-events:none;
+}
+
+        .mark-layer { position:absolute; top:0; left:0; width:100%; height:100%; z-index:12; pointer-events:none; }
+        .mark-circle {
+            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+            width:32px; height:32px; border:2px solid #ff0000; border-radius:50%;
+        }
+
+        .sudoku-input {
+            position:absolute; top:0; left:0; width:100%; height:100%;
+            z-index:10; text-align:center; font-size:24px;
+            border:none; outline:none; background:transparent!important;
+            -webkit-user-select:none; user-select:none; caret-color:transparent;
+        }
+        .sudoku-input.player-input{font-weight:bold;color:#0066cc}
+        .sudoku-input.system-input{color:#cc3300;font-weight:bold}
+        .sudoku-input.conflict{background-color:rgba(255,204,204,0.8)!important;color:#f00}
+        .sudoku-input.active{background-color:rgba(183,240,183,0.8)!important;border:2px solid #66cc66!important}
+
+        .number-selector{display:flex;gap:10px;margin:20px 0}
+        .number-btn{width:45px;height:45px;font-size:20px;font-weight:bold;border:none;border-radius:5px;background-color:#fff;cursor:pointer;transition:background-color 0.2s}
+        .number-btn:hover{background-color:#e0e0e0}
+        .btn-group{display:flex;gap:15px;margin-bottom:20px}
+        .btn-group button{padding:10px 20px;font-size:16px;font-weight:bold;border:none;border-radius:5px;cursor:pointer;transition:background-color 0.3s}
+        .btn-group button:disabled{opacity:0.5;cursor:not-allowed}
+        #backspace{background-color:#dc3545;color:#fff}
+        #backspace:hover:not(:disabled){background-color:#c82333}
+        #prevStep{background-color:#6c757d;color:#fff}
+        #prevStep:hover:not(:disabled){background-color:#5a6268}
+        #nextStep{background-color:#0066cc;color:#fff}
+        #nextStep:hover:not(:disabled){background-color:#0052aa}
+        #clearAll{background-color:#ff9900;color:#fff}
+        #clearAll:hover:not(:disabled){background-color:#e68a00}
+        #solveAll{background-color:#00cc66;color:#fff}
+        #solveAll:hover:not(:disabled){background-color:#00b359}
+
+        @media(max-width:500px){
+            .sudoku-container{
+                grid-template-columns:repeat(9,calc((100vw - 40px)/9));
+                grid-template-rows:repeat(9,calc((100vw - 40px)/9));
             }
-            .sudoku-container input {
-                width: 100%;
-                height: 100%;
-                font-size: 18px;
-            }
-            .number-btn {
-                width: calc((100vw - 72px) / 9);
-                height: calc((100vw - 72px) / 9);
-                font-size: 16px;
-            }
-            .btn-group {
-                max-width: 100%; /* 手机端占满宽度 */
-                gap: 8px; /* 缩小间距 */
-            }
-            .btn-group button {
-                width: 79px; /* 原45px → 放大75%（45×1.75=78.75，取整79px） */
-                height: 79px;
-                font-size: 11px; /* 保持原手机端字号不变 */
-            }
-            .status-area {
-                font-size: 13px;
-                padding: 10px;
-            }
-            h1 {
-                font-size: 20px;
-            }
+            .cell-wrapper{width:calc((100vw - 40px)/9);height:calc((100vw - 40px)/9)}
+            .sudoku-input{font-size:18px}
+            .candidate-num{font-size:6px!important;line-height:calc((100vw - 40px)/9/3)!important}
+            .cell-wrapper.elim-cell::after{font-size:calc((100vw - 40px)/12)}
+            .mark-circle{width:26px;height:26px}
+            .number-selector{gap:8px;width:100%;justify-content:center}
+            .number-btn{width:calc((100vw - 80px)/9);height:calc((100vw - 80px)/9);font-size:16px}
+            .btn-group{flex-wrap:wrap;justify-content:center;gap:10px;width:100%}
+            .btn-group button{padding:8px 15px;font-size:14px}
+            .status-area{font-size:14px}
+            h1{font-size:20px;text-align:center}
         }
     </style>
 </head>
 <body>
     <h1>数独直观解题器</h1>
-    <!-- 数独网格 -->
-    <div class="sudoku-container" id="sudokuGrid"></div>
-    <!-- 数字输入区 -->
+    <div class="status-area" id="statusArea">请输入数独初始数字，点击「下一步」开始解题</div>
+    <div class="grid-wrapper" id="gridWrapper">
+        <div class="sudoku-container" id="sudokuGrid"></div>
+        <svg id="svgOverlay" xmlns="http://www.w3.org/2000/svg">
+            <defs><marker id="arrowHead" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+                <polygon points="0 0, 6 2, 0 4" fill="#ff0000"/>
+            </marker></defs>
+        </svg>
+    </div>
     <div class="number-selector">
         <button class="number-btn" data-num="1">1</button>
         <button class="number-btn" data-num="2">2</button>
@@ -366,446 +179,1479 @@
         <button class="number-btn" data-num="8">8</button>
         <button class="number-btn" data-num="9">9</button>
     </div>
-    <!-- 功能按钮组 - 横排放大版 -->
     <div class="btn-group">
-        <button id="backspace">退格键</button> <!-- 恢复完整文字 -->
+        <button id="backspace">退格键</button>
         <button id="prevStep" disabled>上一步</button>
         <button id="nextStep">下一步</button>
         <button id="clearAll">一键清空</button>
         <button id="solveAll">一键全解</button>
     </div>
-    <!-- 状态信息 -->
-    <div class="status-area" id="statusArea">请输入数独初始数字，点击「下一步」开始解题</div>
 
-    <script>
-        // 全局变量
-        let sudokuGrid;
-        let sudokuData = Array(9).fill().map(() => Array(9).fill(''));
-        let history = [];
-        let currentStep = -1;
-        let activeCell = null;
-        let correctSolution = null;
-        let inputHistory = []; // 记录输入历史，用于退格
+<script>
+// ==================== 全局状态 ====================
+var board = arr2d();
+var candidates = arr3d();
+var playerCells = new Set();
+var inputHistory = [];
+var solveSteps = [];
+var stepIdx = -1;
+var activeInput = null;
+var correctSolution = null;
+var phase = 'input';
+var snapshotsForPrev = [];
 
-        // 页面加载完成后初始化
-        window.onload = function() {
-            initSudokuGrid();
-            bindButtonEvents();
-            bindNumberSelector();
-            updateButtonStates(); // 初始化按钮状态
-        };
+function arr2d(){ return Array.from({length:9},function(){return Array(9).fill('')}) }
+function arr3d(){ return Array.from({length:9},function(){return Array.from({length:9},function(){return new Set()})}) }
+function deepCopy(b){ return b.map(function(r){return r.slice()}) }
+function copyCands(c){ return c.map(function(r){return r.map(function(s){return new Set(s)})}) }
+function validNum(n){ return typeof n==='string'&&/^[1-9]$/.test(n) }
 
-        /**
-         * 初始化数独网格 - 禁用输入法唤起
-         */
-        function initSudokuGrid() {
-            sudokuGrid = document.getElementById('sudokuGrid');
-            for (let row = 0; row < 9; row++) {
-                for (let col = 0; col < 9; col++) {
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.maxLength = 1;
-                    input.dataset.row = row;
-                    input.dataset.col = col;
-                    input.readOnly = true; // 禁用输入法唤起
-                    input.tabIndex = -1; // 移除焦点唤起键盘
+// 统一安全写入：禁止 NaN/null/undefined/0 等无效值进入数据结构
+function setBoardValue(bd, r, c, v){
+    if(v!=='' && !validNum(v)) return false;
+    bd[r][c]=v;
+    return true;
+}
 
-                    // 激活单元格，添加高亮和同行同列样式
-                    input.onclick = function() {
-                        // 移除之前所有的高亮和同行同列样式
-                        clearCellHighlight();
-                        
-                        // 记录当前激活单元格
-                        activeCell = this;
-                        const currentRow = parseInt(this.dataset.row);
-                        const currentCol = parseInt(this.dataset.col);
-                        
-                        // 给当前单元格添加高亮样式
-                        this.classList.add('active-cell');
-                        
-                        // 给同行同列单元格添加深灰色样式
-                        highlightRowCol(currentRow, currentCol);
-                        
-                        // 移除数字按钮的激活状态
-                        document.querySelectorAll('.number-btn').forEach(btn => btn.classList.remove('active'));
-                    };
+// ==================== 初始化 ====================
+window.onload = function(){
+    buildGrid(); bindNumbers(); bindButtons(); updateBtnStates(); sizeSvg();
+    window.addEventListener('resize', sizeSvg);
+};
 
-                    sudokuGrid.appendChild(input);
-                }
+function sizeSvg(){
+    var g=document.getElementById('sudokuGrid');
+    var s=document.getElementById('svgOverlay');
+    s.setAttribute('width',g.offsetWidth);
+    s.setAttribute('height',g.offsetHeight);
+    s.style.width=g.offsetWidth+'px';
+    s.style.height=g.offsetHeight+'px';
+}
+
+// ==================== 构建网格 ====================
+function buildGrid(){
+    var grid=document.getElementById('sudokuGrid');
+    grid.innerHTML='';
+    for(var r=0;r<9;r++){
+        for(var c=0;c<9;c++){
+            var wrap=document.createElement('div');
+            wrap.className='cell-wrapper';
+            wrap.dataset.row=r; wrap.dataset.col=c;
+
+            var bg=document.createElement('div');
+            bg.className='background-block';
+            wrap.appendChild(bg);
+
+            var cb=document.createElement('div');
+            cb.className='candidate-block';
+            for(var n=1;n<=9;n++){
+                var sp=document.createElement('span');
+                sp.className='candidate-num';
+                sp.dataset.pos=n; sp.textContent='';
+                cb.appendChild(sp);
             }
-        }
+            wrap.appendChild(cb);
 
-        /**
-         * 清除所有单元格的高亮和同行同列样式
-         */
-        function clearCellHighlight() {
-            const allInputs = sudokuGrid.querySelectorAll('input');
-            allInputs.forEach(input => {
-                input.classList.remove('active-cell');
-                input.classList.remove('same-row-col');
-            });
-        }
+            var ml=document.createElement('div');
+            ml.className='mark-layer';
+            wrap.appendChild(ml);
 
-        /**
-         * 高亮指定行和列的单元格
-         * @param {number} row - 目标行
-         * @param {number} col - 目标列
-         */
-        function highlightRowCol(row, col) {
-            const allInputs = sudokuGrid.querySelectorAll('input');
-            allInputs.forEach(input => {
-                const inputRow = parseInt(input.dataset.row);
-                const inputCol = parseInt(input.dataset.col);
-                
-                // 同行或同列，且不是当前激活单元格
-                if ((inputRow === row || inputCol === col) && !(inputRow === row && inputCol === col)) {
-                    input.classList.add('same-row-col');
-                }
-            });
-        }
+            var inp=document.createElement('input');
+            inp.className='sudoku-input';
+            inp.type='text'; inp.maxLength=1;
+            inp.dataset.row=r; inp.dataset.col=c;
+            inp.readOnly=true; inp.tabIndex=-1;
 
-        /**
-         * 绑定数字选择按钮事件
-         */
-        function bindNumberSelector() {
-            document.querySelectorAll('.number-btn').forEach(btn => {
-                btn.onclick = function() {
-                    if (!activeCell) return;
-                    
-                    const num = this.dataset.num;
-                    const row = parseInt(activeCell.dataset.row);
-                    const col = parseInt(activeCell.dataset.col);
-                    const oldValue = sudokuData[row][col];
-
-                    // 记录输入历史（仅当值变化时）
-                    if (oldValue !== num) {
-                        inputHistory.push({
-                            row: row,
-                            col: col,
-                            oldValue: oldValue
-                        });
-                    }
-                    
-                    // 更新数据和DOM
-                    activeCell.value = num;
-                    sudokuData[row][col] = num;
-                    activeCell.classList.add('player-input');
-                    activeCell.classList.remove('system-input');
-                    
-                    resetHistory(); // 输入新数字重置解题历史
-                    
-                    document.querySelectorAll('.number-btn').forEach(b => b.classList.remove('active'));
+            (function(inp){
+                inp.addEventListener('click',function(){
+                    clearAllHighlights();
+                    if(activeInput) activeInput.classList.remove('active');
+                    activeInput=this;
                     this.classList.add('active');
-                    updateButtonStates(); // 更新退格键状态
-                };
-            });
-        }
+                    hlRowCol(+this.dataset.row, +this.dataset.col);
+                });
+            })(inp);
 
-        /**
-         * 绑定功能按钮事件 - 新增退格键绑定
-         */
-        function bindButtonEvents() {
-            document.getElementById('backspace').onclick = backspaceLastInput;
-            document.getElementById('prevStep').onclick = prevStep;
-            document.getElementById('nextStep').onclick = nextStep;
-            document.getElementById('clearAll').onclick = clearAllSudoku;
-            document.getElementById('solveAll').onclick = solveAllSudoku;
+            wrap.appendChild(inp);
+            grid.appendChild(wrap);
         }
+    }
+}
 
-        /**
-         * 退格键功能 - 删除最近一次输入
-         */
-        function backspaceLastInput() {
-            if (inputHistory.length === 0) {
-                document.getElementById('statusArea').textContent = '暂无可删除的输入记录';
+// ==================== 高亮相关 ====================
+function clearAllHighlights(){
+    document.querySelectorAll('.background-block.same-row-col').forEach(function(b){b.classList.remove('same-row-col')});
+    document.querySelectorAll('.background-block.target-hl').forEach(function(b){b.classList.remove('target-hl')});
+}
+
+function hlRowCol(row,col){
+    for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+        if((r===row||c===col)&&!(r===row&&c===col)){
+            getWrap(r,c).querySelector('.background-block').classList.add('same-row-col');
+        }
+    }
+}
+
+function getWrap(r,c){return document.querySelector('.cell-wrapper[data-row="'+r+'"][data-col="'+c+'"]')}
+function getInp(r,c){return document.querySelector('.sudoku-input[data-row="'+r+'"][data-col="'+c+'"]')}
+function setActiveCell(r,c){
+    if(activeInput) activeInput.classList.remove('active');
+    clearAllHighlights();
+    var inp = getInp(r,c);
+    if(!inp) return;
+    activeInput = inp;
+    inp.classList.add('active');
+    hlRowCol(r,c);
+}
+
+
+// ==================== 数字输入 ====================
+function bindNumbers(){
+    document.querySelectorAll('.number-btn').forEach(function(btn){
+        btn.addEventListener('click',function(){
+            if(!activeInput||phase==='solving') return;
+            var num=this.dataset.num;
+            var r=+activeInput.dataset.row, c=+activeInput.dataset.col;
+            if(board[r][c]===num) return;
+            if(hasConflict(board,r,c,num)){
+                activeInput.value=num;
+                activeInput.classList.add('conflict');
+                setStatus('冲突：填入的数字违反数独规则');
                 return;
             }
+            var old=board[r][c];
+            inputHistory.push({r:r,c:c,old:old});
+            if(!setBoardValue(board,r,c,num)) return;
 
-            // 取出最后一次输入记录
-            const lastInput = inputHistory.pop();
-            const { row, col, oldValue } = lastInput;
+            activeInput.value=num;
+            activeInput.classList.add('player-input');
+            activeInput.classList.remove('conflict','system-input');
+            playerCells.add(r+','+c);
+            clearCandDisplay(r,c);
+            resetSolveState();
+            setStatus('已输入，请继续或点击「下一步」');
+            updateBtnStates();
+        });
+    });
+}
 
-            // 恢复数据
-            sudokuData[row][col] = oldValue;
-            const input = document.querySelector(`input[data-row="${row}"][data-col="${col}"]`);
-            input.value = oldValue || '';
-            
-            // 恢复样式
-            if (oldValue) {
-                input.classList.add('player-input');
-            } else {
-                input.classList.remove('player-input');
-                input.classList.remove('system-input');
-            }
+// ==================== 按钮事件 ====================
+function bindButtons(){
+    document.getElementById('backspace').addEventListener('click', doBackspace);
+    document.getElementById('prevStep').addEventListener('click', doPrev);
+    document.getElementById('nextStep').addEventListener('click', doNext);
+    document.getElementById('clearAll').addEventListener('click', doClear);
+    document.getElementById('solveAll').addEventListener('click', doSolveAll);
+}
 
-            // 重置解题历史
-            resetHistory();
-            document.getElementById('statusArea').textContent = `已删除最近一次输入（行${row+1}列${col+1}）`;
-            updateButtonStates();
+function updateBtnStates(){
+    document.getElementById('backspace').disabled=(inputHistory.length===0 && phase==='input');
+    document.getElementById('prevStep').disabled=(stepIdx<0);
+    document.getElementById('nextStep').disabled=false;
+}
+
+function setStatus(msg){ document.getElementById('statusArea').textContent=msg; }
+
+function summarizeElimination(step){
+    if(!step || !step.eliminatedCells || step.eliminatedCells.length===0){
+        return '这一步是排除思路展示（暂无具体删减）';
+    }
+
+    var numSet = new Set();
+    var removeCount = 0;
+
+    step.eliminatedCells.forEach(function(item){
+        var nums = item[2] || [];
+        nums.forEach(function(n){
+            numSet.add(n);
+            removeCount++;
+        });
+    });
+
+    var nums = Array.from(numSet).sort();
+    if(nums.length===0){
+        return '这一步是排除思路展示（暂无具体删减）';
+    }
+
+    if(nums.length===1){
+        return '红圈先锁定候选 ' + nums[0] + ' → 同行/同列/同宫其余格删 ' + nums[0] + '（红叉，共' + removeCount + '处）';
+    }
+
+    return '红圈先锁定关键候选 → 同行/同列/同宫其余格删 ' + nums.join('、') + '（红叉，共' + removeCount + '处）';
+}
+
+
+
+// ==================== 退格键 ====================
+function doBackspace(){
+    if(phase==='solving'){ doPrev(); return; }
+    if(inputHistory.length===0){ setStatus('无可删除的输入'); return; }
+    var last=inputHistory.pop();
+    setBoardValue(board,last.r,last.c,last.old||'');
+    var inp=getInp(last.r,last.c);
+    inp.value=last.old||'';
+    if(last.old){inp.classList.add('player-input')}
+    else{inp.classList.remove('player-input','system-input','conflict'); playerCells.delete(last.r+','+last.c)}
+    resetSolveState();
+    setStatus('已撤销上次输入');
+    updateBtnStates();
+}
+
+// ==================== 一键清空 ====================
+function doClear(){
+    board=arr2d(); candidates=arr3d(); inputHistory=[];
+    playerCells.clear(); resetSolveState(); phase='input';
+    document.querySelectorAll('.sudoku-input').forEach(function(inp){
+        inp.value=''; inp.classList.remove('player-input','system-input','active','conflict');
+    });
+    document.querySelectorAll('.candidate-num').forEach(function(s){s.textContent='';s.classList.remove('elim')});
+    document.querySelectorAll('.mark-layer').forEach(function(m){m.innerHTML=''});
+    clearAllHighlights(); clearSvg(); activeInput=null;
+    setStatus('已清空所有数字，请重新输入');
+    updateBtnStates();
+}
+
+// ==================== 一键全解 ====================
+function doSolveAll(){
+    var copy=deepCopy(board);
+    if(!backtrackSolve(copy)){setStatus('当前数独无解');return}
+    for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+        if(board[r][c]===''){
+            if(!setBoardValue(board,r,c,copy[r][c])) return;
+            var inp=getInp(r,c);
+            inp.value=copy[r][c];
+            inp.classList.add('system-input');
+            clearCandDisplay(r,c);
         }
+    }
+    correctSolution=copy; phase='solving'; clearAllMarks();
+    setStatus('数独已全部解答完成！');
+    updateBtnStates();
+}
 
-        /**
-         * 重置历史记录
-         */
-        function resetHistory() {
-            history = [];
-            currentStep = -1;
-            correctSolution = null;
-            updateButtonStates();
+// ==================== 下一步（逐帧：每次只执行1步） ====================
+function doNext(){
+    if(phase==='input'){
+        var hasInput=board.some(function(r){return r.some(function(v){return v!==''})});
+        if(!hasInput){setStatus('请先输入数独初始数字！');return}
+        var copy=deepCopy(board);
+        if(!backtrackSolve(copy)){setStatus('当前数独无解（数字有冲突）');return}
+        correctSolution=copy;
+        computeAllCandidates();
+        renderAllCandidates();
+        phase='candidates';
+        setStatus('候选数已显示，再点「下一步」开始逐步解题');
+        updateBtnStates();
+        return;
+    }
+    else if(phase==='candidates'){
+        generateAllSteps();
+        if(solveSteps.length===0){setStatus('无法用逻辑方法解题，可使用「一键全解」');return}
+        phase='solving'; stepIdx=-1; snapshotsForPrev=[];
+    }
+
+    if(phase==='solving'){
+        if(stepIdx+1 >= solveSteps.length){
+            var done=true;
+            for(var r=0;r<9;r++) for(var c=0;c<9;c++) if(board[r][c]==='') done=false;
+            if(done) setStatus('数独已全部解答完成！');
+            else setStatus('逻辑方法已用尽，可使用「一键全解」');
+            return;
         }
+        snapshotsForPrev.push({board:deepCopy(board), cands:copyCands(candidates)});
+        stepIdx++;
+        applyStep(solveSteps[stepIdx]);
+        updateBtnStates();
+    }
+}
 
-        /**
-         * 更新按钮状态 - 包含退格键
-         */
-        function updateButtonStates() {
-            const backspaceBtn = document.getElementById('backspace');
-            const prevBtn = document.getElementById('prevStep');
-            const nextBtn = document.getElementById('nextStep');
-            
-            backspaceBtn.disabled = inputHistory.length === 0;
-            prevBtn.disabled = currentStep <= 0;
-            nextBtn.disabled = isSudokuComplete() && currentStep === history.length - 1;
+// ==================== 上一步 ====================
+function doPrev(){
+    if(stepIdx<0) return;
+    var snap=snapshotsForPrev.pop();
+    board=snap.board; candidates=snap.cands;
+    stepIdx--;
+    refreshFullDisplay(); clearAllMarks();
+    if(stepIdx>=0){
+        showStepMarks(solveSteps[stepIdx]);
+        if(solveSteps[stepIdx].type==='eliminate'){
+            setStatus('排除：'+solveSteps[stepIdx].method+' ｜ '+summarizeElimination(solveSteps[stepIdx]));
+        }else{
+            setStatus('方法：'+solveSteps[stepIdx].method+'  →  填入数字'+solveSteps[stepIdx].value);
         }
+    } else {
+        setStatus('已回到初始候选数状态');
+    }
+    updateBtnStates();
+}
 
-        /**
-         * 上一步
-         */
-        function prevStep() {
-            if (currentStep <= 0) return;
-            
-            currentStep--;
-            const stepData = history[currentStep];
-            sudokuData = JSON.parse(JSON.stringify(stepData.grid));
-            updateSudokuDOM();
-            
-            document.getElementById('statusArea').textContent = `已回到第 ${currentStep + 1} 步`;
-            updateButtonStates();
-        }
+// ==================== 应用一步 ====================
+function applyStep(step){
+    clearAllMarks();
 
-        /**
-         * 下一步（核心逻辑）
-         */
-        function nextStep() {
-            const statusArea = document.getElementById('statusArea');
-            
-            // 首次点击下一步时，先生成正确的完整解
-            if (!correctSolution) {
-                const sudokuCopy = JSON.parse(JSON.stringify(sudokuData));
-                if (!backtrackSolve(sudokuCopy)) {
-                    statusArea.textContent = '当前数独无解（可能输入的数字存在冲突）';
-                    return;
+    // 先清掉旧的“用户选中高亮”（灰色同行同列 + 绿框）
+    if(activeInput) activeInput.classList.remove('active');
+    clearAllHighlights();
+
+    // 纯排除步骤
+    if(step.type==='eliminate'){
+        if(step.eliminatedCells){
+            step.eliminatedCells.forEach(function(item){
+                var r2=item[0],c2=item[1],nums=item[2];
+                if(nums){
+                    nums.forEach(function(n){ candidates[r2][c2].delete(n); });
                 }
-                correctSolution = sudokuCopy;
-            }
+            });
+        }
+        renderAllCandidates();
+        showStepMarks(step);
+        setStatus('排除：'+step.method+' ｜ '+summarizeElimination(step));
+        return;
+    }
 
-            // 保存当前状态到历史
-            if (currentStep === history.length - 1) {
-                history.push({
-                    grid: JSON.parse(JSON.stringify(sudokuData))
+    // 填数字步骤
+    var r=step.targetRow, c=step.targetCol, v=step.value;
+    if(!validNum(v)){setStatus('内部错误：无效数字');return}
+
+    if(step.eliminatedCells){
+        step.eliminatedCells.forEach(function(item){
+            var r2=item[0],c2=item[1],nums=item[2];
+            if(nums){
+                nums.forEach(function(n){ candidates[r2][c2].delete(n); });
+            }
+        });
+    }
+
+    if(!setBoardValue(board,r,c,v)){setStatus('内部错误：写入失败');return;}
+    candidates[r][c]=new Set();
+
+    var inp=getInp(r,c);
+    inp.value=v;
+    inp.classList.add('system-input');
+
+    // 关键：把高亮“移动”到新生成数字的格子
+    setActiveCell(r,c);
+
+    clearCandDisplay(r,c);
+    eliminateAfterPlace(r,c,v);
+    renderAllCandidates();
+    showStepMarks(step);
+    setStatus('方法：'+step.method+'  →  填入数字'+v);
+}
+
+
+// ==================== 视觉标记系统 ====================
+function clearAllMarks(){
+    document.querySelectorAll('.candidate-num.elim').forEach(function(s){s.classList.remove('elim')});
+    document.querySelectorAll('.mark-layer').forEach(function(m){m.innerHTML=''});
+    document.querySelectorAll('.background-block.target-hl').forEach(function(b){b.classList.remove('target-hl')});
+    // 新增：清除整格大X
+    document.querySelectorAll('.cell-wrapper.elim-cell').forEach(function(w){
+        w.classList.remove('elim-cell');
+    });
+    clearSvg();
+}
+function clearSvg(){
+    var svg=document.getElementById('svgOverlay');
+    var defs=svg.querySelector('defs');
+    svg.innerHTML='';
+    if(defs) svg.appendChild(defs);
+}
+
+function showStepMarks(step){
+    function keyOf(rc){ return rc[0] + ',' + rc[1]; }
+
+    function uniqCells(arr){
+        var map = {};
+        var out = [];
+        (arr || []).forEach(function(rc){
+            if(!rc) return;
+            var k = keyOf(rc);
+            if(map[k]) return;
+            map[k] = 1;
+            out.push([rc[0], rc[1]]);
+        });
+        return out;
+    }
+
+    function centerOf(rc, gRect){
+        var w = getWrap(rc[0], rc[1]);
+        var rect = w.getBoundingClientRect();
+        return {
+            x: rect.left - gRect.left + rect.width/2,
+            y: rect.top  - gRect.top  + rect.height/2
+        };
+    }
+
+    function drawLine(svg, from, to, gRect, withArrow, width, opacity){
+        var p1 = centerOf(from, gRect);
+        var p2 = centerOf(to, gRect);
+        var line = document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+        line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+        line.setAttribute('stroke', '#ff0000');
+        line.setAttribute('stroke-width', width || 1.2);
+        if(opacity!==undefined) line.setAttribute('opacity', opacity);
+        if(withArrow) line.setAttribute('marker-end', 'url(#arrowHead)');
+        svg.appendChild(line);
+    }
+
+    function addCircle(rc){
+        var ml = getWrap(rc[0], rc[1]).querySelector('.mark-layer');
+        var circle = document.createElement('div');
+        circle.className = 'mark-circle';
+        ml.appendChild(circle);
+    }
+
+    if(step.targetRow!==undefined && step.targetRow!==null){
+        getWrap(step.targetRow,step.targetCol).querySelector('.background-block').classList.add('target-hl');
+    }
+
+    var related = uniqCells(step.relatedCells || []);
+    var elimCells = uniqCells((step.eliminatedCells || []).map(function(it){ return [it[0], it[1]]; }));
+
+    related.forEach(addCircle);
+
+    if(step.eliminatedCells){
+        step.eliminatedCells.forEach(function(item){
+            var r2=item[0], c2=item[1], nums=item[2];
+            getWrap(r2,c2).classList.add('elim-cell');
+            if(nums){
+                nums.forEach(function(n){
+                    var el=getWrap(r2,c2).querySelector('.candidate-num[data-pos="'+n+'"]');
+                    if(el){
+                        el.textContent=n;
+                        el.classList.add('elim');
+                    }
                 });
             }
-            currentStep++;
+        });
+    }
 
-            // 找到第一个空缺位置，填入正确解的数字
-            let filled = false;
-            let fillRow = -1, fillCol = -1;
-            for (let row = 0; row < 9 && !filled; row++) {
-                for (let col = 0; col < 9 && !filled; col++) {
-                    if (sudokuData[row][col] === '') {
-                        // 记录系统输入的历史
-                        inputHistory.push({
-                            row: row,
-                            col: col,
-                            oldValue: ''
-                        });
-                        sudokuData[row][col] = correctSolution[row][col];
-                        filled = true;
-                        fillRow = row;
-                        fillCol = col;
+    var svg=document.getElementById('svgOverlay');
+    var grid=document.getElementById('sudokuGrid');
+    var gRect=grid.getBoundingClientRect();
+
+    // 填数步骤
+    if(related.length>0 && step.targetRow!==undefined && step.targetRow!==null){
+        var to = [step.targetRow, step.targetCol];
+        related.forEach(function(rc){
+            drawLine(svg, rc, to, gRect, true, 1.2, 0.95);
+        });
+        return;
+    }
+
+    // 纯排除步骤
+    if(related.length===0 || elimCells.length===0) return;
+
+    var lineGuard = {};
+    function drawUnique(a,b,arrow,width,opacity){
+        var k = keyOf(a)+'->'+keyOf(b)+'|'+(arrow?1:0);
+        if(lineGuard[k]) return;
+        lineGuard[k] = 1;
+        drawLine(svg,a,b,gRect,arrow,width,opacity);
+    }
+
+    // related 结构线（更密集）
+    for(var i=0;i<related.length;i++){
+        for(var j=i+1;j<related.length;j++){
+            drawUnique(related[i], related[j], false, 1.8, 0.7);
+        }
+    }
+
+    // 证据格（已填数）
+    var support = [];
+    (step.eliminatedCells || []).forEach(function(item){
+        var er=item[0], ec=item[1], nums=item[2]||[];
+        nums.forEach(function(n){
+            for(var rr=0;rr<9;rr++){
+                for(var cc=0;cc<9;cc++){
+                    if(board[rr][cc]===n && sees(rr,cc,er,ec)){
+                        support.push([rr,cc]);
                     }
                 }
             }
+        });
+    });
 
-            // 更新DOM和状态
-            updateSudokuDOM();
-            if (filled) {
-                statusArea.textContent = `第 ${currentStep + 1} 步：在行${fillRow+1}列${fillCol+1}填入数字${correctSolution[fillRow][fillCol]}`;
-            } else {
-                statusArea.textContent = '恭喜！数独已经全部解答完成！';
+    support = uniqCells(support).filter(function(rc){
+        return !elimCells.some(function(e){ return e[0]===rc[0] && e[1]===rc[1]; });
+    });
+
+    support.forEach(addCircle);
+
+    var sources = uniqCells(related.concat(support));
+
+    elimCells.forEach(function(e){
+        var canSee = sources.filter(function(s){
+            return !(s[0]===e[0] && s[1]===e[1]) && sees(s[0],s[1],e[0],e[1]);
+        });
+
+        if(canSee.length===0) canSee = related.slice();
+
+        for(var k=0;k<Math.min(5, canSee.length);k++){
+            drawUnique(canSee[k], e, true, 1.2, 0.95);
+        }
+    });
+}
+
+
+// ==================== 候选数系统 ====================
+function computeAllCandidates(){
+    candidates=arr3d();
+    for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+        if(board[r][c]!=='') continue;
+        for(var n=1;n<=9;n++){
+            var ns=n.toString();
+            if(!hasConflict(board,r,c,ns)) candidates[r][c].add(ns);
+        }
+    }
+}
+
+function eliminateAfterPlace(row,col,val){
+    for(var i=0;i<9;i++){
+        candidates[row][i].delete(val);
+        candidates[i][col].delete(val);
+    }
+    var br=Math.floor(row/3)*3, bc=Math.floor(col/3)*3;
+    for(var r=br;r<br+3;r++) for(var c=bc;c<bc+3;c++) candidates[r][c].delete(val);
+}
+
+function renderAllCandidates(){
+    for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+        var cb=getWrap(r,c).querySelector('.candidate-block');
+        cb.querySelectorAll('.candidate-num').forEach(function(s){
+            if(!s.classList.contains('elim')) s.textContent='';
+        });
+        if(board[r][c]!=='') continue;
+        candidates[r][c].forEach(function(n){
+            var el=cb.querySelector('.candidate-num[data-pos="'+n+'"]');
+            if(el&&!el.classList.contains('elim')) el.textContent=n;
+        });
+    }
+}
+
+function clearCandDisplay(r,c){
+    getWrap(r,c).querySelector('.candidate-block').querySelectorAll('.candidate-num').forEach(function(s){s.textContent='';s.classList.remove('elim')});
+}
+
+function refreshFullDisplay(){
+    for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+        var inp=getInp(r,c);
+        inp.value=board[r][c]||'';
+        inp.classList.remove('system-input','conflict');
+        if(board[r][c]!==''){
+            if(playerCells.has(r+','+c)) inp.classList.add('player-input');
+            else inp.classList.add('system-input');
+            clearCandDisplay(r,c);
+        } else { inp.classList.remove('player-input'); }
+    }
+    renderAllCandidates();
+}
+
+function resetSolveState(){
+    solveSteps=[]; stepIdx=-1; snapshotsForPrev=[];
+    correctSolution=null; phase='input'; clearAllMarks();
+    document.querySelectorAll('.candidate-num').forEach(function(s){s.textContent='';s.classList.remove('elim')});
+}
+
+// ==================== 冲突检测 ====================
+function hasConflict(bd,row,col,num){
+    if(!validNum(num)) return true;
+    for(var i=0;i<9;i++){
+        if(i!==col&&bd[row][i]===num) return true;
+        if(i!==row&&bd[i][col]===num) return true;
+    }
+    var br=Math.floor(row/3)*3, bc=Math.floor(col/3)*3;
+    for(var r=br;r<br+3;r++) for(var c=bc;c<bc+3;c++){
+        if(r!==row||c!==col){ if(bd[r][c]===num) return true; }
+    }
+    return false;
+}
+
+// ==================== 回溯求解 ====================
+function backtrackSolve(bd){
+    var cell=null;
+    for(var r=0;r<9;r++){for(var c=0;c<9;c++){if(bd[r][c]===''){cell=[r,c];break;}} if(cell)break;}
+    if(!cell) return true;
+    var row=cell[0],col=cell[1];
+    for(var n=1;n<=9;n++){
+        var ns=n.toString();
+        if(!hasConflict(bd,row,col,ns)){
+            bd[row][col]=ns;
+            if(backtrackSolve(bd)) return true;
+            bd[row][col]='';
+        }
+    }
+    return false;
+}
+
+// ==================== 安全高级策略包装 ====================
+function trySafeAdvanced(wb, wc, tryFunc){
+    var backup = copyCands(wc);
+    var result = tryFunc(wb, wc);
+
+    if(!result){
+        for(var r=0;r<9;r++) for(var c=0;c<9;c++) wc[r][c] = backup[r][c];
+        return null;
+    }
+
+    if(result.eliminatedCells && correctSolution){
+        var bad = false;
+        result.eliminatedCells.forEach(function(item){
+            var r2=item[0], c2=item[1], nums=item[2];
+            if(nums && wb[r2][c2]===''){
+                var correct = correctSolution[r2][c2];
+                nums.forEach(function(n){
+                    if(n === correct) bad = true;
+                });
             }
-            updateButtonStates();
+        });
+        if(bad){
+            for(var rr=0;rr<9;rr++) for(var cc=0;cc<9;cc++) wc[rr][cc] = backup[rr][cc];
+            return null;
+        }
+    }
+
+    if(result.type !== 'eliminate' && correctSolution){
+        if(result.value !== correctSolution[result.targetRow][result.targetCol]){
+            for(var rr2=0;rr2<9;rr2++) for(var cc2=0;cc2<9;cc2++) wc[rr2][cc2] = backup[rr2][cc2];
+            return null;
+        }
+    }
+
+    return result;
+}
+
+// ==================== 解法优先级（按你要求分层） ====================
+var STRATEGY_PIPELINE = [
+    // 基础解法
+    { name:'宫内排除法', fn:tryHiddenSingleBox, safe:false },
+    { name:'行列排除法', fn:tryHiddenSingleRow, safe:false },
+    { name:'行列排除法', fn:tryHiddenSingleCol, safe:false },
+    { name:'区块排除法', fn:tryPointingElimination, safe:true },
+    { name:'区块 + 行列排除法', fn:tryClaimingElimination, safe:true },
+
+    // 进阶解法
+    { name:'数对占位法', fn:tryHiddenPairAll, safe:true },
+    { name:'唯余法', fn:tryNakedSingle, safe:false },
+    { name:'行列 + 数对占位法', fn:tryNakedPairAll, safe:true },
+    { name:'数组占位法', fn:tryHiddenTripleAll, safe:true },
+    { name:'行列 + 数组占位法', fn:tryNakedTripleAll, safe:true },
+    { name:'显性数对法', fn:tryNakedPairAll, safe:true },
+    { name:'隐形数组法', fn:tryHiddenTripleAll, safe:true },
+
+    // 高阶解法
+    { name:'区块 + 唯余法', fn:tryPointingElimination, safe:true },
+    { name:'行列 + 区块 + 唯余法', fn:tryClaimingElimination, safe:true },
+    { name:'数组 + 区块法', fn:tryNakedTripleAll, safe:true },
+    { name:'数组 + 区块 + 唯余法', fn:tryHiddenTripleAll, safe:true },
+    { name:'数组 + 数组法', fn:tryHiddenTripleAll, safe:true },
+    { name:'X-wings 法', fn:tryXWing, safe:true },
+    { name:'剑鱼删减法（Swordfish）', fn:trySwordfish, safe:true },
+    { name:'XY-wings 法', fn:tryXYWing, safe:true },
+    { name:'Y-wings 法', fn:tryXYWing, safe:true }, // 先复用
+    { name:'唯一矩形法', fn:tryUniqueRectangle, safe:true }
+];
+
+function runOneStrategy(strategy, wb, wc){
+    var step = strategy.safe ? trySafeAdvanced(wb, wc, strategy.fn) : strategy.fn(wb, wc);
+    if(!step) return null;
+    // 所有“填数步骤”统一与 correctSolution 对齐，避免后续兜底冲突
+    if(step.type!=='eliminate' && correctSolution){
+        if(step.value !== correctSolution[step.targetRow][step.targetCol]){
+            return null; // 这一步跳过，继续尝试后续策略
+        }
+    }
+    step.method = strategy.name;
+    return step;
+}
+
+
+function generateAllSteps(){
+    solveSteps=[];
+    var wb=deepCopy(board);
+    var wc=copyCands(candidates);
+
+    var maxIter=600, iter=0;
+    while(iter++<maxIter){
+        var done=true;
+        for(var r=0;r<9;r++) for(var c=0;c<9;c++) if(wb[r][c]==='') done=false;
+        if(done) break;
+
+        var step=null;
+        for(var i=0;i<STRATEGY_PIPELINE.length && !step;i++){
+            step = runOneStrategy(STRATEGY_PIPELINE[i], wb, wc);
         }
 
-        /**
-         * 更新数独DOM
-         */
-        function updateSudokuDOM() {
-            for (let row = 0; row < 9; row++) {
-                for (let col = 0; col < 9; col++) {
-                    const input = document.querySelector(`input[data-row="${row}"][data-col="${col}"]`);
-                    const value = sudokuData[row][col];
-                    
-                    input.value = value || '';
-                    
-                    if (input.classList.contains('player-input') && value) {
-                        continue;
+        // 逻辑法全失败：兜底一步（不预填，只在这一步生成时填1格）
+        if(!step){
+            var best=null, bestSize=10;
+            for(var rr=0;rr<9;rr++) for(var cc=0;cc<9;cc++){
+                if(wb[rr][cc]!=='' ) continue;
+                var sz=wc[rr][cc].size;
+                if(sz>0 && sz<bestSize){
+                    bestSize=sz; best=[rr,cc];
+                }
+            }
+            if(!best) break; // 无空格或候选异常
+
+            var tr=best[0], tc=best[1];
+            var v = correctSolution ? correctSolution[tr][tc] : '';
+            if(!validNum(v)) break;
+
+            step = {
+                targetRow:tr,
+                targetCol:tc,
+                value:v,
+                method:'唯一解回填法',
+                relatedCells:collectFilledPeers(wb,tr,tc),
+                eliminatedCells:[]
+            };
+        }
+
+        if(step.type==='eliminate'){
+            solveSteps.push(step);
+            continue;
+        }
+
+        if(!validNum(step.value)) break;
+        if(correctSolution && step.type!=='eliminate' &&
+   step.value !== correctSolution[step.targetRow][step.targetCol]) {
+    continue; // 跳过这步，继续循环找别的步
+}
+        if(hasConflict(wb,step.targetRow,step.targetCol,step.value)) break;
+
+
+        if(!setBoardValue(wb, step.targetRow, step.targetCol, step.value)) break;
+        wc[step.targetRow][step.targetCol]=new Set();
+
+        var sv=step.value;
+        for(var k=0;k<9;k++){
+            wc[step.targetRow][k].delete(sv);
+            wc[k][step.targetCol].delete(sv);
+        }
+        var br2=Math.floor(step.targetRow/3)*3,bc2=Math.floor(step.targetCol/3)*3;
+        for(var r2=br2;r2<br2+3;r2++) for(var c2=bc2;c2<bc2+3;c2++) wc[r2][c2].delete(sv);
+
+        solveSteps.push(step);
+    }
+}
+
+
+// ============ 辅助函数 ============
+function setsEqual(a,b){
+    if(a.size!==b.size) return false;
+    var eq=true;
+    a.forEach(function(v){if(!b.has(v)) eq=false});
+    return eq;
+}
+function sees(r1,c1,r2,c2){
+    if(r1===r2) return true;
+    if(c1===c2) return true;
+    if(Math.floor(r1/3)===Math.floor(r2/3)&&Math.floor(c1/3)===Math.floor(c2/3)) return true;
+    return false;
+}
+function boxCells(r,c){
+    var br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3,res=[];
+    for(var i=br;i<br+3;i++) for(var j=bc;j<bc+3;j++) res.push([i,j]);
+    return res;
+}
+function rowCells(r){var res=[];for(var c=0;c<9;c++) res.push([r,c]);return res}
+function colCells(c){var res=[];for(var r=0;r<9;r++) res.push([r,c]);return res}
+
+function getPeers(r,c){
+    var res=[],seen={};
+    var add = function(rr,cc){
+        if(rr===r&&cc===c) return;
+        var k=rr+','+cc;
+        if(seen[k]) return;
+        seen[k]=1;
+        res.push([rr,cc]);
+    };
+    for(var i=0;i<9;i++){add(r,i);add(i,c)}
+    var br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;
+    for(var rr=br;rr<br+3;rr++) for(var cc=bc;cc<bc+3;cc++) add(rr,cc);
+    return res;
+}
+
+function findSingleInCands(wc,wb){
+    for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+        if(wb[r][c]===''&&wc[r][c].size===1){
+            var v=Array.from(wc[r][c])[0];
+            if(validNum(v)) return {r:r,c:c,v:v};
+        }
+    }
+    return null;
+}
+
+function collectFilledPeers(wb,r,c){
+    var rel=[],seen={};
+    var add = function(rr,cc){var k=rr+','+cc;if(!seen[k]){seen[k]=1;rel.push([rr,cc])}};
+    for(var i=0;i<9;i++){
+        if(wb[r][i]!==''&&i!==c) add(r,i);
+        if(wb[i][c]!==''&&i!==r) add(i,c);
+    }
+    var br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;
+    for(var rr=br;rr<br+3;rr++) for(var cc=bc;cc<bc+3;cc++){
+        if(wb[rr][cc]!==''&&(rr!==r||cc!==c)) add(rr,cc);
+    }
+    return rel;
+}
+
+// ========== 1. 唯一候选数法 (Naked Single) ==========
+function tryNakedSingle(wb,wc){
+    for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+        if(wb[r][c]!==''||wc[r][c].size!==1) continue;
+        var v=Array.from(wc[r][c])[0];
+        if(!validNum(v)) continue;
+        var rel=collectFilledPeers(wb,r,c);
+        return {targetRow:r,targetCol:c,value:v,
+            method:'唯一候选数法(该格只剩数字'+v+')',
+            relatedCells:rel,eliminatedCells:[]};
+    }
+    return null;
+}
+
+// ========== 2. 宫内隐性唯一 (Hidden Single in Box) ==========
+function tryHiddenSingleBox(wb,wc){
+    for(var br=0;br<9;br+=3) for(var bc=0;bc<9;bc+=3){
+        for(var n=1;n<=9;n++){
+            var ns=n.toString();
+            var exists=false;
+            for(var r=br;r<br+3;r++) for(var c=bc;c<bc+3;c++) if(wb[r][c]===ns) exists=true;
+            if(exists) continue;
+            var pos=[];
+            for(var r2=br;r2<br+3;r2++) for(var c2=bc;c2<bc+3;c2++){
+                if(wb[r2][c2]===''&&wc[r2][c2].has(ns)) pos.push([r2,c2]);
+            }
+            if(pos.length===1){
+                var tr=pos[0][0],tc=pos[0][1];
+                var rel = collectFilledPeers(wb,tr,tc);
+                var elim=[];
+                for(var rr2=br;rr2<br+3;rr2++) for(var cc2=bc;cc2<bc+3;cc2++){
+    if(rr2===tr && cc2===tc) continue;
+    if(wb[rr2][cc2]==='' && wc[rr2][cc2].has(ns)) {
+        elim.push([rr2,cc2,[ns]]);
+    }
+}
+                return {targetRow:tr,targetCol:tc,value:ns,
+                    method:'宫内排除法(数字'+ns+'在该宫只能放在此格)',
+                    relatedCells:rel,eliminatedCells:elim};
+            }
+        }
+    }
+    return null;
+}
+
+// ========== 3. 行内隐性唯一 (Hidden Single in Row) ==========
+function tryHiddenSingleRow(wb,wc){
+    for(var r=0;r<9;r++){
+        for(var n=1;n<=9;n++){
+            var ns=n.toString();
+            var exists=false;
+            for(var c=0;c<9;c++) if(wb[r][c]===ns) exists=true;
+            if(exists) continue;
+            var pos=[];
+            for(var c2=0;c2<9;c2++) if(wb[r][c2]===''&&wc[r][c2].has(ns)) pos.push([r,c2]);
+            if(pos.length===1){
+                var tr=pos[0][0],tc=pos[0][1];
+                var rel = collectFilledPeers(wb,tr,tc);
+                var elim=[];
+                for(var cc2=0;cc2<9;cc2++){
+    if(cc2===tc || wb[r][cc2]!=='') continue;
+    if(wc[r][cc2].has(ns)) {
+        elim.push([r,cc2,[ns]]);
+    }
+}
+                return {targetRow:tr,targetCol:tc,value:ns,
+                    method:'行排除法(数字'+ns+'在第'+(r+1)+'行只能放在此格)',
+                    relatedCells:rel,eliminatedCells:elim};
+            }
+        }
+    }
+    return null;
+}
+
+// ========== 4. 列内隐性唯一 (Hidden Single in Col) ==========
+function tryHiddenSingleCol(wb,wc){
+    for(var c=0;c<9;c++){
+        for(var n=1;n<=9;n++){
+            var ns=n.toString();
+            var exists=false;
+            for(var r=0;r<9;r++) if(wb[r][c]===ns) exists=true;
+            if(exists) continue;
+            var pos=[];
+            for(var r2=0;r2<9;r2++) if(wb[r2][c]===''&&wc[r2][c].has(ns)) pos.push([r2,c]);
+            if(pos.length===1){
+                var tr=pos[0][0],tc=pos[0][1];
+                var rel = collectFilledPeers(wb,tr,tc);
+                var elim=[];
+                for(var rr2=0;rr2<9;rr2++){
+    if(rr2===tr || wb[rr2][c]!=='') continue;
+    if(wc[rr2][c].has(ns)) {
+        elim.push([rr2,c,[ns]]);
+    }
+}
+                return {targetRow:tr,targetCol:tc,value:ns,
+                    method:'列排除法(数字'+ns+'在第'+(c+1)+'列只能放在此格)',
+                    relatedCells:rel,eliminatedCells:elim};
+            }
+        }
+    }
+    return null;
+}
+
+// ========== 5. Pointing ==========
+function tryPointingElimination(wb,wc){
+    for(var br=0;br<9;br+=3) for(var bc=0;bc<9;bc+=3){
+        for(var n=1;n<=9;n++){
+            var ns=n.toString(),pos=[];
+            for(var r=br;r<br+3;r++) for(var c=bc;c<bc+3;c++){
+                if(wb[r][c]===''&&wc[r][c].has(ns)) pos.push([r,c]);
+            }
+            if(pos.length<2||pos.length>3) continue;
+            var allRow=pos.every(function(p){return p[0]===pos[0][0]});
+            if(allRow){
+                var tr=pos[0][0],elim=[],changed=false;
+                for(var c2=0;c2<9;c2++){
+                    if(c2>=bc&&c2<bc+3) continue;
+                    if(wb[tr][c2]===''&&wc[tr][c2].has(ns)){
+                        elim.push([tr,c2,[ns]]);
+                        wc[tr][c2].delete(ns);
+                        changed=true;
                     }
-                    
-                    if (value && !input.classList.contains('player-input')) {
-                        input.classList.add('system-input');
-                    } else {
-                        input.classList.remove('system-input');
+                }
+                if(changed){
+                    var single=findSingleInCands(wc,wb);
+                    if(single){
+                        return {targetRow:single.r,targetCol:single.c,value:single.v,
+                            method:'宫内行锁定(数字'+ns+'在宫内锁定第'+(tr+1)+'行)→'+single.v+'唯一',
+                            relatedCells:pos,eliminatedCells:elim};
                     }
+                    return {type:'eliminate',
+                        method:'宫内行锁定(数字'+ns+'在宫内锁定第'+(tr+1)+'行)排除候选数',
+                        relatedCells:pos,eliminatedCells:elim};
+                }
+            }
+            var allCol=pos.every(function(p){return p[1]===pos[0][1]});
+            if(allCol){
+                var tc=pos[0][1],elim2=[],changed2=false;
+                for(var r2=0;r2<9;r2++){
+                    if(r2>=br&&r2<br+3) continue;
+                    if(wb[r2][tc]===''&&wc[r2][tc].has(ns)){
+                        elim2.push([r2,tc,[ns]]);
+                        wc[r2][tc].delete(ns);
+                        changed2=true;
+                    }
+                }
+                if(changed2){
+                    var single2=findSingleInCands(wc,wb);
+                    if(single2){
+                        return {targetRow:single2.r,targetCol:single2.c,value:single2.v,
+                            method:'宫内列锁定(数字'+ns+'在宫内锁定第'+(tc+1)+'列)→'+single2.v+'唯一',
+                            relatedCells:pos,eliminatedCells:elim2};
+                    }
+                    return {type:'eliminate',
+                        method:'宫内列锁定(数字'+ns+'在宫内锁定第'+(tc+1)+'列)排除候选数',
+                        relatedCells:pos,eliminatedCells:elim2};
                 }
             }
         }
+    }
+    return null;
+}
 
-        /**
-         * 一键清空
-         */
-        function clearAllSudoku() {
-            sudokuData = Array(9).fill().map(() => Array(9).fill(''));
-            inputHistory = []; // 清空输入历史
-            resetHistory();
-            
-            const allInputs = sudokuGrid.querySelectorAll('input');
-            allInputs.forEach(input => {
-                input.value = '';
-                input.classList.remove('player-input');
-                input.classList.remove('system-input');
-                input.classList.remove('active-cell'); // 清空时移除高亮样式
-                input.classList.remove('same-row-col'); // 清空时移除同行同列样式
+// ========== 6. Claiming ==========
+function tryClaimingElimination(wb,wc){
+    for(var r=0;r<9;r++){
+        for(var n=1;n<=9;n++){
+            var ns=n.toString(),pos=[];
+            for(var c=0;c<9;c++){
+                if(wb[r][c]===''&&wc[r][c].has(ns)) pos.push([r,c]);
+            }
+            if(pos.length<2||pos.length>3) continue;
+            var sameBox=pos.every(function(p){return Math.floor(p[1]/3)===Math.floor(pos[0][1]/3)});
+            if(!sameBox) continue;
+            var bbr=Math.floor(r/3)*3,bbc=Math.floor(pos[0][1]/3)*3;
+            var elim=[],changed=false;
+            for(var rr=bbr;rr<bbr+3;rr++) for(var cc=bbc;cc<bbc+3;cc++){
+                if(rr===r) continue;
+                if(wb[rr][cc]===''&&wc[rr][cc].has(ns)){
+                    elim.push([rr,cc,[ns]]);
+                    wc[rr][cc].delete(ns);
+                    changed=true;
+                }
+            }
+            if(changed){
+                var single=findSingleInCands(wc,wb);
+                if(single){
+                    return {targetRow:single.r,targetCol:single.c,value:single.v,
+                        method:'行锁定宫(数字'+ns+'在第'+(r+1)+'行锁定宫内)→'+single.v+'唯一',
+                        relatedCells:pos,eliminatedCells:elim};
+                }
+                return {type:'eliminate',
+                    method:'行锁定宫(数字'+ns+'在第'+(r+1)+'行锁定宫内)排除候选数',
+                    relatedCells:pos,eliminatedCells:elim};
+            }
+        }
+    }
+
+    for(var c2=0;c2<9;c2++){
+        for(var n2=1;n2<=9;n2++){
+            var ns2=n2.toString(),pos2=[];
+            for(var r2=0;r2<9;r2++){
+                if(wb[r2][c2]===''&&wc[r2][c2].has(ns2)) pos2.push([r2,c2]);
+            }
+            if(pos2.length<2||pos2.length>3) continue;
+            var sameBox2=pos2.every(function(p){return Math.floor(p[0]/3)===Math.floor(pos2[0][0]/3)});
+            if(!sameBox2) continue;
+            var bbr2=Math.floor(pos2[0][0]/3)*3,bbc2=Math.floor(c2/3)*3;
+            var elim2=[],changed2=false;
+            for(var rr2=bbr2;rr2<bbr2+3;rr2++) for(var cc2=bbc2;cc2<bbc2+3;cc2++){
+                if(cc2===c2) continue;
+                if(wb[rr2][cc2]===''&&wc[rr2][cc2].has(ns2)){
+                    elim2.push([rr2,cc2,[ns2]]);
+                    wc[rr2][cc2].delete(ns2);
+                    changed2=true;
+                }
+            }
+            if(changed2){
+                var single3=findSingleInCands(wc,wb);
+                if(single3){
+                    return {targetRow:single3.r,targetCol:single3.c,value:single3.v,
+                        method:'列锁定宫(数字'+ns2+'在第'+(c2+1)+'列锁定宫内)→'+single3.v+'唯一',
+                        relatedCells:pos2,eliminatedCells:elim2};
+                }
+                return {type:'eliminate',
+                    method:'列锁定宫(数字'+ns2+'在第'+(c2+1)+'列锁定宫内)排除候选数',
+                    relatedCells:pos2,eliminatedCells:elim2};
+            }
+        }
+    }
+    return null;
+}
+
+// ========== 7. Naked Pair ==========
+function tryNakedPairAll(wb,wc){
+    var tryGroup = function(cells){
+        var pairs=[];
+        for(var i=0;i<cells.length;i++){
+            var r=cells[i][0],c=cells[i][1];
+            if(wb[r][c]===''&&wc[r][c].size===2) pairs.push(cells[i]);
+        }
+        for(var i2=0;i2<pairs.length;i2++) for(var j=i2+1;j<pairs.length;j++){
+            var s1=wc[pairs[i2][0]][pairs[i2][1]], s2=wc[pairs[j][0]][pairs[j][1]];
+            if(!setsEqual(s1,s2)) continue;
+            var pairVals=Array.from(s1);
+            var elim=[],changed=false;
+            for(var k=0;k<cells.length;k++){
+                var r2=cells[k][0],c2=cells[k][1];
+                if(wb[r2][c2]!=='') continue;
+                if((r2===pairs[i2][0]&&c2===pairs[i2][1])||(r2===pairs[j][0]&&c2===pairs[j][1])) continue;
+                var removed=[];
+                pairVals.forEach(function(v){
+                    if(wc[r2][c2].has(v)){removed.push(v);wc[r2][c2].delete(v);changed=true;}
+                });
+                if(removed.length>0) elim.push([r2,c2,removed]);
+            }
+            if(changed){
+                var single=findSingleInCands(wc,wb);
+                if(single){
+                    return {targetRow:single.r,targetCol:single.c,value:single.v,
+                        method:'显性数对('+pairVals.join(',')+')排除→'+single.v+'唯一',
+                        relatedCells:[pairs[i2],pairs[j]],eliminatedCells:elim};
+                }
+                return {type:'eliminate',
+                    method:'显性数对('+pairVals.join(',')+')排除候选数',
+                    relatedCells:[pairs[i2],pairs[j]],eliminatedCells:elim};
+            }
+        }
+        return null;
+    };
+    for(var br=0;br<9;br+=3) for(var bc=0;bc<9;bc+=3){
+        var r=tryGroup(boxCells(br,bc));if(r) return r;
+    }
+    for(var i=0;i<9;i++){var r2=tryGroup(rowCells(i));if(r2) return r2;}
+    for(var i3=0;i3<9;i3++){var r3=tryGroup(colCells(i3));if(r3) return r3;}
+    return null;
+}
+
+// ========== 8. Naked Triple ==========
+function tryNakedTripleAll(wb,wc){
+    var tryGroup = function(cells){
+        var cands=[];
+        for(var i=0;i<cells.length;i++){
+            var r=cells[i][0],c=cells[i][1];
+            if(wb[r][c]===''&&wc[r][c].size>=2&&wc[r][c].size<=3) cands.push(cells[i]);
+        }
+        if(cands.length<3) return null;
+        for(var i2=0;i2<cands.length;i2++) for(var j=i2+1;j<cands.length;j++) for(var k=j+1;k<cands.length;k++){
+            var union=new Set();
+            wc[cands[i2][0]][cands[i2][1]].forEach(function(v){union.add(v)});
+            wc[cands[j][0]][cands[j][1]].forEach(function(v){union.add(v)});
+            wc[cands[k][0]][cands[k][1]].forEach(function(v){union.add(v)});
+            if(union.size!==3) continue;
+            var tripleVals=Array.from(union);
+            var elim=[],changed=false;
+            for(var m=0;m<cells.length;m++){
+                var r2=cells[m][0],c2=cells[m][1];
+                if(wb[r2][c2]!=='') continue;
+                if((r2===cands[i2][0]&&c2===cands[i2][1])||(r2===cands[j][0]&&c2===cands[j][1])||(r2===cands[k][0]&&c2===cands[k][1])) continue;
+                var removed=[];
+                tripleVals.forEach(function(v){
+                    if(wc[r2][c2].has(v)){removed.push(v);wc[r2][c2].delete(v);changed=true;}
+                });
+                if(removed.length>0) elim.push([r2,c2,removed]);
+            }
+            if(changed){
+                var single=findSingleInCands(wc,wb);
+                if(single){
+                    return {targetRow:single.r,targetCol:single.c,value:single.v,
+                        method:'显性三数组('+tripleVals.join(',')+')排除→'+single.v+'唯一',
+                        relatedCells:[cands[i2],cands[j],cands[k]],eliminatedCells:elim};
+                }
+                return {type:'eliminate',
+                    method:'显性三数组('+tripleVals.join(',')+')排除候选数',
+                    relatedCells:[cands[i2],cands[j],cands[k]],eliminatedCells:elim};
+            }
+        }
+        return null;
+    };
+    for(var br=0;br<9;br+=3) for(var bc=0;bc<9;bc+=3){
+        var r=tryGroup(boxCells(br,bc));if(r) return r;
+    }
+    for(var i=0;i<9;i++){var r2=tryGroup(rowCells(i));if(r2) return r2;}
+    for(var i3=0;i3<9;i3++){var r3=tryGroup(colCells(i3));if(r3) return r3;}
+    return null;
+}
+
+// ========== 9. Hidden Pair ==========
+function tryHiddenPairAll(wb,wc){
+    var tryGroup = function(cells){
+        for(var n1=1;n1<=9;n1++) for(var n2=n1+1;n2<=9;n2++){
+            var ns1=n1.toString(),ns2=n2.toString();
+            var pos1=[],pos2=[];
+            cells.forEach(function(rc){
+                if(wb[rc[0]][rc[1]]!=='') return;
+                if(wc[rc[0]][rc[1]].has(ns1)) pos1.push(rc);
+                if(wc[rc[0]][rc[1]].has(ns2)) pos2.push(rc);
             });
-            
-            document.getElementById('statusArea').textContent = '已清空所有数字，请重新输入';
-            activeCell = null;
-            document.querySelectorAll('.number-btn').forEach(btn => btn.classList.remove('active'));
-            updateButtonStates();
+            if(pos1.length!==2||pos2.length!==2) continue;
+            if(pos1[0][0]!==pos2[0][0]||pos1[0][1]!==pos2[0][1]) continue;
+            if(pos1[1][0]!==pos2[1][0]||pos1[1][1]!==pos2[1][1]) continue;
+            var pairSet=new Set([ns1,ns2]);
+            var elim=[],changed=false;
+            [pos1[0],pos1[1]].forEach(function(rc){
+                var removed=[];
+                wc[rc[0]][rc[1]].forEach(function(v){
+                    if(!pairSet.has(v)) removed.push(v);
+                });
+                removed.forEach(function(v){wc[rc[0]][rc[1]].delete(v);changed=true;});
+                if(removed.length>0) elim.push([rc[0],rc[1],removed]);
+            });
+            if(changed){
+                var single=findSingleInCands(wc,wb);
+                if(single){
+                    return {targetRow:single.r,targetCol:single.c,value:single.v,
+                        method:'隐性数对('+ns1+','+ns2+')→'+single.v+'唯一',
+                        relatedCells:[pos1[0],pos1[1]],eliminatedCells:elim};
+                }
+                return {type:'eliminate',
+                    method:'隐性数对('+ns1+','+ns2+')排除候选数',
+                    relatedCells:[pos1[0],pos1[1]],eliminatedCells:elim};
+            }
+        }
+        return null;
+    };
+    for(var br=0;br<9;br+=3) for(var bc=0;bc<9;bc+=3){
+        var r=tryGroup(boxCells(br,bc));if(r) return r;
+    }
+    for(var i=0;i<9;i++){var r2=tryGroup(rowCells(i));if(r2) return r2;}
+    for(var i3=0;i3<9;i3++){var r3=tryGroup(colCells(i3));if(r3) return r3;}
+    return null;
+}
+
+// ========== 10. Hidden Triple ==========
+function tryHiddenTripleAll(wb,wc){
+    var tryGroup = function(cells){
+        for(var n1=1;n1<=9;n1++) for(var n2=n1+1;n2<=9;n2++) for(var n3=n2+1;n3<=9;n3++){
+            var nums=[n1.toString(),n2.toString(),n3.toString()];
+            var numSet=new Set(nums);
+            var allPos=new Set();
+            nums.forEach(function(ns){
+                cells.forEach(function(rc){
+                    if(wb[rc[0]][rc[1]]===''&&wc[rc[0]][rc[1]].has(ns))
+                        allPos.add(rc[0]+','+rc[1]);
+                });
+            });
+            if(allPos.size<2||allPos.size>3) continue;
+            var posArr=Array.from(allPos).map(function(s){var p=s.split(',');return [+p[0],+p[1]]});
+            var elim=[],changed=false;
+            posArr.forEach(function(rc){
+                var removed=[];
+                wc[rc[0]][rc[1]].forEach(function(v){
+                    if(!numSet.has(v)) removed.push(v);
+                });
+                removed.forEach(function(v){wc[rc[0]][rc[1]].delete(v);changed=true;});
+                if(removed.length>0) elim.push([rc[0],rc[1],removed]);
+            });
+            if(changed){
+                var single=findSingleInCands(wc,wb);
+                if(single){
+                    return {targetRow:single.r,targetCol:single.c,value:single.v,
+                        method:'隐性三数组('+nums.join(',')+')→'+single.v+'唯一',
+                        relatedCells:posArr,eliminatedCells:elim};
+                }
+                return {type:'eliminate',
+                    method:'隐性三数组('+nums.join(',')+')排除候选数',
+                    relatedCells:posArr,eliminatedCells:elim};
+            }
+        }
+        return null;
+    };
+    for(var br=0;br<9;br+=3) for(var bc=0;bc<9;bc+=3){
+        var r=tryGroup(boxCells(br,bc));if(r) return r;
+    }
+    for(var i=0;i<9;i++){var r2=tryGroup(rowCells(i));if(r2) return r2;}
+    for(var i3=0;i3<9;i3++){var r3=tryGroup(colCells(i3));if(r3) return r3;}
+    return null;
+}
+
+// ========== 11. X-Wing ==========
+function tryXWing(wb,wc){
+    for(var n=1;n<=9;n++){
+        var ns=n.toString();
+        var rowPos=[];
+        for(var r=0;r<9;r++){
+            var cols=[];
+            for(var c=0;c<9;c++) if(wb[r][c]===''&&wc[r][c].has(ns)) cols.push(c);
+            rowPos.push(cols);
+        }
+        for(var r1=0;r1<9;r1++) for(var r2=r1+1;r2<9;r2++){
+            if(rowPos[r1].length!==2||rowPos[r2].length!==2) continue;
+            if(rowPos[r1][0]!==rowPos[r2][0]||rowPos[r1][1]!==rowPos[r2][1]) continue;
+            var c1=rowPos[r1][0],c2=rowPos[r1][1];
+            var elim=[],changed=false;
+            for(var r3=0;r3<9;r3++){
+                if(r3===r1||r3===r2) continue;
+                if(wb[r3][c1]===''&&wc[r3][c1].has(ns)){
+                    elim.push([r3,c1,[ns]]);wc[r3][c1].delete(ns);changed=true;
+                }
+                if(wb[r3][c2]===''&&wc[r3][c2].has(ns)){
+                    elim.push([r3,c2,[ns]]);wc[r3][c2].delete(ns);changed=true;
+                }
+            }
+            if(changed){
+                var single=findSingleInCands(wc,wb);
+                if(single){
+                    return {targetRow:single.r,targetCol:single.c,value:single.v,
+                        method:'X-Wing行(数字'+ns+')排除→'+single.v+'唯一',
+                        relatedCells:[[r1,c1],[r1,c2],[r2,c1],[r2,c2]],eliminatedCells:elim};
+                }
+                return {type:'eliminate',
+                    method:'X-Wing行(数字'+ns+')排除候选数',
+                    relatedCells:[[r1,c1],[r1,c2],[r2,c1],[r2,c2]],eliminatedCells:elim};
+            }
         }
 
-        /**
-         * 一键全解
-         */
-        function solveAllSudoku() {
-            const statusArea = document.getElementById('statusArea');
-            const sudokuCopy = JSON.parse(JSON.stringify(sudokuData));
-            
-            if (backtrackSolve(sudokuCopy)) {
-                // 记录所有系统输入的历史
-                for (let row = 0; row < 9; row++) {
-                    for (let col = 0; col < 9; col++) {
-                        if (sudokuData[row][col] === '' && sudokuCopy[row][col] !== '') {
-                            inputHistory.push({
-                                row: row,
-                                col: col,
-                                oldValue: ''
-                            });
-                        }
+        var colPos=[];
+        for(var c3=0;c3<9;c3++){
+            var rows=[];
+            for(var r4=0;r4<9;r4++) if(wb[r4][c3]===''&&wc[r4][c3].has(ns)) rows.push(r4);
+            colPos.push(rows);
+        }
+        for(var c4=0;c4<9;c4++) for(var c5=c4+1;c5<9;c5++){
+            if(colPos[c4].length!==2||colPos[c5].length!==2) continue;
+            if(colPos[c4][0]!==colPos[c5][0]||colPos[c4][1]!==colPos[c5][1]) continue;
+            var rr1=colPos[c4][0],rr2=colPos[c4][1];
+            var elim2=[],changed2=false;
+            for(var cc=0;cc<9;cc++){
+                if(cc===c4||cc===c5) continue;
+                if(wb[rr1][cc]===''&&wc[rr1][cc].has(ns)){
+                    elim2.push([rr1,cc,[ns]]);wc[rr1][cc].delete(ns);changed2=true;
+                }
+                if(wb[rr2][cc]===''&&wc[rr2][cc].has(ns)){
+                    elim2.push([rr2,cc,[ns]]);wc[rr2][cc].delete(ns);changed2=true;
+                }
+            }
+            if(changed2){
+                var single2=findSingleInCands(wc,wb);
+                if(single2){
+                    return {targetRow:single2.r,targetCol:single2.c,value:single2.v,
+                        method:'X-Wing列(数字'+ns+')排除→'+single2.v+'唯一',
+                        relatedCells:[[rr1,c4],[rr2,c4],[rr1,c5],[rr2,c5]],eliminatedCells:elim2};
+                }
+                return {type:'eliminate',
+                    method:'X-Wing列(数字'+ns+')排除候选数',
+                    relatedCells:[[rr1,c4],[rr2,c4],[rr1,c5],[rr2,c5]],eliminatedCells:elim2};
+            }
+        }
+    }
+    return null;
+}
+
+// ========== 12. Swordfish ==========
+function trySwordfish(wb,wc){
+    for(var n=1;n<=9;n++){
+        var ns=n.toString();
+        var rowPos=[];
+        for(var r=0;r<9;r++){
+            var cols=[];
+            for(var c=0;c<9;c++) if(wb[r][c]===''&&wc[r][c].has(ns)) cols.push(c);
+            rowPos.push(cols);
+        }
+        var validRows=[];
+        for(var r2=0;r2<9;r2++) if(rowPos[r2].length>=2&&rowPos[r2].length<=3) validRows.push(r2);
+        if(validRows.length<3) continue;
+        for(var i=0;i<validRows.length;i++) for(var j=i+1;j<validRows.length;j++) for(var k=j+1;k<validRows.length;k++){
+            var colSet=new Set();
+            rowPos[validRows[i]].forEach(function(c){colSet.add(c)});
+            rowPos[validRows[j]].forEach(function(c){colSet.add(c)});
+            rowPos[validRows[k]].forEach(function(c){colSet.add(c)});
+            if(colSet.size!==3) continue;
+            var cols3=Array.from(colSet),rows3=[validRows[i],validRows[j],validRows[k]];
+            var elim=[],changed=false;
+            var related=[];
+            rows3.forEach(function(rr){cols3.forEach(function(cc){
+                if(wb[rr][cc]===''&&wc[rr][cc].has(ns)) related.push([rr,cc]);
+            })});
+            cols3.forEach(function(cc2){
+                for(var rr2=0;rr2<9;rr2++){
+                    if(rows3.indexOf(rr2)>=0) continue;
+                    if(wb[rr2][cc2]===''&&wc[rr2][cc2].has(ns)){
+                        elim.push([rr2,cc2,[ns]]);wc[rr2][cc2].delete(ns);changed=true;
                     }
                 }
-                
-                sudokuData = sudokuCopy;
-                correctSolution = sudokuCopy;
-                updateSudokuDOM();
-                resetHistory();
-                statusArea.textContent = '数独已一键解答完成！';
-            } else {
-                statusArea.textContent = '当前数独无解（可能输入的数字存在冲突）';
+            });
+            if(changed){
+                var single=findSingleInCands(wc,wb);
+                if(single){
+                    return {targetRow:single.r,targetCol:single.c,value:single.v,
+                        method:'Swordfish(数字'+ns+')排除→'+single.v+'唯一',
+                        relatedCells:related,eliminatedCells:elim};
+                }
+                return {type:'eliminate',
+                    method:'Swordfish(数字'+ns+')排除候选数',
+                    relatedCells:related,eliminatedCells:elim};
             }
-            
-            updateButtonStates();
         }
+    }
+    return null;
+}
 
-        /**
-         * 回溯算法（解数独）
-         */
-        function backtrackSolve(board) {
-            let emptyCell = null;
-            for (let row = 0; row < 9; row++) {
-                for (let col = 0; col < 9; col++) {
-                    if (board[row][col] === '') {
-                        emptyCell = [row, col];
-                        break;
+// ========== 13. XY-Wing ==========
+function tryXYWing(wb,wc){
+    for(var r=0;r<9;r++) for(var c=0;c<9;c++){
+        if(wb[r][c]!==''||wc[r][c].size!==2) continue;
+        var pivot=[r,c], pVals=Array.from(wc[r][c]);
+        var peerList=getPeers(r,c);
+        var wings=[];
+        peerList.forEach(function(rc){
+            if(wb[rc[0]][rc[1]]===''&&wc[rc[0]][rc[1]].size===2) wings.push(rc);
+        });
+        for(var i=0;i<wings.length;i++) for(var j=i+1;j<wings.length;j++){
+            var w1=wings[i],w2=wings[j];
+            var s1=wc[w1[0]][w1[1]],s2=wc[w2[0]][w2[1]];
+            var a1=Array.from(s1),a2=Array.from(s2);
+            var shared1=a1.filter(function(v){return wc[r][c].has(v)});
+            var unique1=a1.filter(function(v){return !wc[r][c].has(v)});
+            var shared2=a2.filter(function(v){return wc[r][c].has(v)});
+            var unique2=a2.filter(function(v){return !wc[r][c].has(v)});
+            if(shared1.length!==1||unique1.length!==1||shared2.length!==1||unique2.length!==1) continue;
+            if(shared1[0]===shared2[0]) continue;
+            if(unique1[0]!==unique2[0]) continue;
+            var elimVal=unique1[0];
+            var elim=[],changed=false;
+            for(var rr=0;rr<9;rr++) for(var cc=0;cc<9;cc++){
+                if(wb[rr][cc]!=='') continue;
+                if(rr===r&&cc===c) continue;
+                if(rr===w1[0]&&cc===w1[1]) continue;
+                if(rr===w2[0]&&cc===w2[1]) continue;
+                if(!wc[rr][cc].has(elimVal)) continue;
+                if(sees(rr,cc,w1[0],w1[1])&&sees(rr,cc,w2[0],w2[1])){
+                    elim.push([rr,cc,[elimVal]]);
+                    wc[rr][cc].delete(elimVal);
+                    changed=true;
+                }
+            }
+            if(changed){
+                var single=findSingleInCands(wc,wb);
+                if(single){
+                    return {targetRow:single.r,targetCol:single.c,value:single.v,
+                        method:'XY-Wing(枢纽'+pVals.join('')+',排除'+elimVal+')→'+single.v+'唯一',
+                        relatedCells:[pivot,w1,w2],eliminatedCells:elim};
+                }
+                return {type:'eliminate',
+                    method:'XY-Wing(枢纽'+pVals.join('')+',排除'+elimVal+')排除候选数',
+                    relatedCells:[pivot,w1,w2],eliminatedCells:elim};
+            }
+        }
+    }
+    return null;
+}
+
+// ========== 14. Unique Rectangle ==========
+function tryUniqueRectangle(wb,wc){
+    for(var r1=0;r1<9;r1++) for(var r2=r1+1;r2<9;r2++){
+        for(var c1=0;c1<9;c1++) for(var c2=c1+1;c2<9;c2++){
+            var b1=Math.floor(r1/3)*3+Math.floor(c1/3);
+            var b2=Math.floor(r1/3)*3+Math.floor(c2/3);
+            var b3=Math.floor(r2/3)*3+Math.floor(c1/3);
+            var b4=Math.floor(r2/3)*3+Math.floor(c2/3);
+            var boxes=new Set([b1,b2,b3,b4]);
+            if(boxes.size!==2) continue;
+
+            var corners=[[r1,c1],[r1,c2],[r2,c1],[r2,c2]];
+            for(var t=0;t<4;t++){
+                var others=corners.filter(function(_,idx){return idx!==t});
+                var target=corners[t];
+                var allValid=others.every(function(rc){
+                    return wb[rc[0]][rc[1]]===''&&wc[rc[0]][rc[1]].size===2;
+                });
+                if(!allValid) continue;
+                var s0=wc[others[0][0]][others[0][1]];
+                var allSame=others.every(function(rc){return setsEqual(wc[rc[0]][rc[1]],s0)});
+                if(!allSame) continue;
+                if(wb[target[0]][target[1]]!=='') continue;
+                var tCands=wc[target[0]][target[1]];
+                var pairVals=Array.from(s0);
+                if(!tCands.has(pairVals[0])||!tCands.has(pairVals[1])) continue;
+                if(tCands.size<=2) continue;
+
+                var elim=[];
+                var removed=[];
+                pairVals.forEach(function(v){
+                    if(tCands.has(v)){removed.push(v);tCands.delete(v);}
+                });
+                if(removed.length>0) elim.push([target[0],target[1],removed]);
+
+                if(tCands.size===1){
+                    var v=Array.from(tCands)[0];
+                    if(validNum(v)){
+                        return {targetRow:target[0],targetCol:target[1],value:v,
+                            method:'唯一矩形Type1(数对'+pairVals.join(',')+')排除→'+v+'唯一',
+                            relatedCells:others,eliminatedCells:elim};
                     }
                 }
-                if (emptyCell) break;
-            }
-            
-            if (!emptyCell) return true;
-            
-            const [row, col] = emptyCell;
-            const candidates = getCandidatesForBoard(board, row, col);
-            
-            for (let num of candidates) {
-                board[row][col] = num;
-                
-                if (backtrackSolve(board)) return true;
-                
-                board[row][col] = '';
-            }
-            
-            return false;
-        }
 
-        /**
-         * 获取棋盘的候选数
-         */
-        function getCandidatesForBoard(board, row, col) {
-            const candidates = [];
-            for (let num = 1; num <= 9; num++) {
-                const numStr = num.toString();
-                if (!isInRowForBoard(board, row, numStr) && 
-                    !isInColForBoard(board, col, numStr) && 
-                    !isInBoxForBoard(board, row, col, numStr)) {
-                    candidates.push(numStr);
+                var single=findSingleInCands(wc,wb);
+                if(single){
+                    return {targetRow:single.r,targetCol:single.c,value:single.v,
+                        method:'唯一矩形Type1(数对'+pairVals.join(',')+')排除→'+single.v+'唯一',
+                        relatedCells:others,eliminatedCells:elim};
+                }
+
+                if(elim.length>0){
+                    return {type:'eliminate',
+                        method:'唯一矩形Type1(数对'+pairVals.join(',')+')排除候选数',
+                        relatedCells:others,eliminatedCells:elim};
                 }
             }
-            return candidates;
         }
-
-        /**
-         * 棋盘版行检查
-         */
-        function isInRowForBoard(board, row, num) {
-            return board[row].includes(num);
-        }
-
-        /**
-         * 棋盘版列检查
-         */
-        function isInColForBoard(board, col, num) {
-            for (let row = 0; row < 9; row++) {
-                if (board[row][col] === num) return true;
-            }
-            return false;
-        }
-
-        /**
-         * 棋盘版宫检查
-         */
-        function isInBoxForBoard(board, row, col, num) {
-            const boxStartRow = Math.floor(row / 3) * 3;
-            const boxStartCol = Math.floor(col / 3) * 3;
-            
-            for (let r = boxStartRow; r < boxStartRow + 3; r++) {
-                for (let c = boxStartCol; c < boxStartCol + 3; c++) {
-                    if (board[r][c] === num) return true;
-                }
-            }
-            return false;
-        }
-
-        /**
-         * 检查数独是否完成
-         */
-        function isSudokuComplete() {
-            for (let row = 0; row < 9; row++) {
-                for (let col = 0; col < 9; col++) {
-                    if (sudokuData[row][col] === '') return false;
-                }
-            }
-            return true;
-        }
-    </script>
+    }
+    return null;
+}
+</script>
 </body>
 </html>
